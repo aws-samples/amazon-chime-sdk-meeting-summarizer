@@ -29,7 +29,7 @@
     "@types/node": "^18",
     "@typescript-eslint/eslint-plugin": "^6",
     "@typescript-eslint/parser": "^6",
-    "aws-cdk": "^2.126.0",
+    "aws-cdk": "^2.101.0",
     "esbuild": "^0.20.0",
     "eslint": "^8",
     "eslint-import-resolver-typescript": "^3.6.1",
@@ -41,7 +41,7 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.504.0",
     "@aws-sdk/client-chime-sdk-voice": "^3.504.0",
-    "@aws-sdk/client-dynamodb": "^3.504.0",
+    "@aws-sdk/client-dynamodb": "^3.506.0",
     "@aws-sdk/client-s3": "^3.504.0",
     "@aws-sdk/client-scheduler": "^3.504.0",
     "@aws-sdk/client-transcribe": "^3.504.0",
@@ -54,8 +54,7 @@
     "dotenv": "^16.4.1",
     "esbuild": "^0.20.0",
     "fs-extra": "^11.2.0",
-    "moment": "^2.30.1",
-    "yarn": "^1.22.21"
+    "moment": "^2.30.1"
   },
   "license": "MIT-0",
   "version": "0.0.0",
