@@ -33,13 +33,16 @@ export const lambdaHandler = async (
     new TextDecoder().decode((await invokeModel(input)).body),
   );
   console.log(`bedrockResponse: ${JSON.stringify(bedrockResponse, null, 2)}`);
-  const { meetingId, meetingType } = JSON.parse(bedrockResponse.completion);
+  let { meetingId, meetingType } = JSON.parse(bedrockResponse.completion);
   if (!meetingId || !meetingType) {
     response.body = JSON.stringify('bad request');
     response.statusCode = 500;
     return response;
   }
+  meetingId = meetingId.replace(/\s/g, ''); // Remove spaces from meetingId
+
   console.log(`meetingID: ${meetingId} meetingType: ${meetingType}`);
+  console.log(`body.formattedDate: ${body.formattedDate}`);
   const requestedDate = moment(body.formattedDate);
   console.log(`requestedDate: ${requestedDate}`);
   await writeDynamo({

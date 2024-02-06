@@ -33,29 +33,64 @@ const chimeSdkClient = new ChimeSDKVoiceClient({ region: AWS_REGION });
 export const createPrompt = (meetingInvitation: string): string => {
   return JSON.stringify({
     prompt: `Human:${meetingInvitation} You are a an information extracting bot. Go over the ${meetingInvitation} and determine what the meeting id and meeting type are <instructions></instructions> xml tags
-      
-        <instructions>
-            - Read the  ${meetingInvitation}
-            - Determine if the meeting invitation is a Chime meeting, a Zoom meeting, a Google meeting or a Webex meeting
-            - Extract the meeting id associated with the meeting invite
-            - once you determine the meetingid, remove all spaces from it in your response (ex: #### ## #### -> ##########)
-            - Your response should only contain an object with the format
-            - the format should look like this {meetingId : "meeting id goes here with the spaces removed", meetingType : "meeting type goes here (the options are 'Chime', 'Webex', 'Zoom', 'Google' "}, no unnecessary spacing should be added
-            - For example {meetingId: "Meeting ID Goes Here", meetingType: "Meeting Type Goes here"}
-            - Zoom meetings ids follow the following format ### #### ####
-            - Webex meeting ids follow the following format #### ### ####
-            - Chime meetingids follow the following format #### ## ####
+        
+          <instructions>  
 
-        </instructions>
-      
-        Assistant: Should I add anything else in my answer?
-      
-        Human: Only return a JSON formatted response with the meetingid and meetingtype associated to it. Do not add any other words to your answer. Do not add any introductory sentences in your answer.    \nAssistant:`,
+          1. Identify Meeting Type:
+              Determine if the ${meetingInvitation} is for Chime, Zoom, Google, Microsoft Teams, or Webex meetings.
+
+          2. Chime, Zoom, and Webex
+              - Find the meetingID
+              - Remove all spaces from the meeting ID (e.g., #### ## #### -> ##########). 
+
+          2. If Google -  Instructions Extract Meeting ID and Dial in 
+            - For Google only, the ${meetingInvitation} will call a meetingID a 'pin', so treat it as a meetingID
+            - Remove all spaces from the meeting ID (e.g., #### ## #### -> ##########). 
+            - Extract Google and Microsoft Dial-In Number (if applicable):
+            - If the meeting is a Google meeting, extract the unique dial-in number.
+            - Locate the dial-in number following the text "to join by phone dial."
+            - Format the extracted Google dial-in number as (+1 ###-###-####), removing dashes and spaces. For example +1 111-111-1111 would become +11111111111)
+
+          3. If Microsoft Teams - Instructions if meeting type is is Microsoft Teams. 
+            - Pay attention to these instructions carefully            
+            - The meetingId we want to store in the generated response is the 'Phone Conference ID' : ### ### ###
+            - in the ${meetingInvitation}, there are two IDs a 'Meeting ID' (### ### ### ##) and a 'Phone Conference ID' (### ### ###), ignore the 'Meeting ID' use the 'Phone Conference ID'
+            - The meetingId we want to store in the generated response is the 'Phone Conference ID' : ### ### ###
+            - The meetingID that we want is referenced as the 'Phone Conference ID' store that one as the meeting ID. 
+            - Find the phone number, extract it and store it as the dialIn number (format (+1 ###-###-####), removing dashes and spaces. For example +1 111-111-1111 would become +11111111111)
+    
+          4. meetingType rules
+          - The only valid responses for meetingType are 'Chime', 'Webex', 'Zoom', 'Google', 'Teams'
+          
+          
+          5.    Generate Response:
+
+              - Create a response object with the following format:
+              { 
+                meetingId: "meeting id goes here with spaces removed",
+                meetingType: "meeting type goes here (options: 'Chime', 'Webex', 'Zoom', 'Google', 'Teams')",
+                dialIn: "Insert Google Dial-In number with no dashes or spaces, or N/A if not a Google Meeting"
+              }
+
+              Meeting ID Formats:
+
+              Zoom: ### #### ####
+              Webex: #### ### ####
+              Chime: #### ## ####
+              Google: ### ### #### (last character is always '#')
+              Teams: ### ### ###
+
+              Ensure that the program does not create fake phone numbers and only includes the Microsoft or Google dial-in number if the meeting type is Google or Teams.
+
+          </instructions>
+        
+          Assistant: Should I add anything else in my answer?
+        
+          Human: Only return a JSON formatted response with the meetingid and meetingtype associated to it. Do not add any other words to your answer. Do not add any introductory sentences in your answer.    \nAssistant:`,
     max_tokens_to_sample: 100,
     temperature: 0,
   });
 };
-
 export const createInvokeModelInput = (
   prompt: string,
 ): InvokeModelCommandInput => {

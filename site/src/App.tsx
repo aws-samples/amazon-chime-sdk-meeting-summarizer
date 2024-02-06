@@ -22,11 +22,11 @@ import 'react-datetime/css/react-datetime.css';
 
 Amplify.configure(AmplifyConfig);
 
-const getNext15MinIncrement = (): moment.Moment => {
+const getNext15MinIncrement = (): string => {
     const now = moment();
     const minutesToAdd = 15 - (now.minute() % 15);
     const next15Minutes = now.add(minutesToAdd, 'minutes');
-    return next15Minutes;
+    return next15Minutes.toISOString();
 };
 
 const App: React.FC = () => {
@@ -64,13 +64,14 @@ const App: React.FC = () => {
             return; // Prevents further execution of the function
         }
         const formattedDate = selectedDate!.toString();
+        console.log(`formattedDate: ${formattedDate}`);
 
         const requestData = {
             meetingInfo,
             formattedDate,
             localTimeZone,
         };
-
+        console.log(`requestedData: ${JSON.stringify(requestData, null, 2)}`);
         try {
             const restOperation = post({
                 apiName: 'request',
@@ -171,7 +172,7 @@ const App: React.FC = () => {
                                 onChange={(detail) => {
                                     setSelectedDate(detail);
                                 }}
-                                initialValue={getNext15MinIncrement()}
+                                initialValue={moment(getNext15MinIncrement()).format('MM/DD/YYYY h:mm A')}
                                 isValidDate={valid}
                                 timeConstraints={{
                                     minutes: { min: 0, max: 59, step: 15 },
