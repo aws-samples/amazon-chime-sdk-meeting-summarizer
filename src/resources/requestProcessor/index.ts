@@ -33,7 +33,7 @@ export const lambdaHandler = async (
     new TextDecoder().decode((await invokeModel(input)).body),
   );
   console.log(`bedrockResponse: ${JSON.stringify(bedrockResponse, null, 2)}`);
-  let { meetingId, meetingType } = JSON.parse(bedrockResponse.completion);
+  let { meetingId, meetingType, dialIn } = JSON.parse(bedrockResponse.completion);
   if (!meetingId || !meetingType) {
     response.body = JSON.stringify('bad request');
     response.statusCode = 500;
@@ -58,6 +58,7 @@ export const lambdaHandler = async (
       meetingID: meetingId,
       meetingType: meetingType,
       scheduledTime: requestedDate.valueOf(),
+      dialIn : dialIn
     });
   } else {
     console.log('Scheduling summarizer for future');
@@ -65,6 +66,7 @@ export const lambdaHandler = async (
       meetingID: meetingId,
       meetingType: meetingType,
       scheduledTime: requestedDate.valueOf(),
+      dialIn
     });
   }
   try {
