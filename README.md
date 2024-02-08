@@ -14,7 +14,7 @@ This README provides an overview of the Chime Summarizer, a CDK application depl
 
 1) Static React App Form
 
-Paste the meeting invite and choose to schedule a time or to trigger the bot immediately. When possible, utilize a 'Copy' button when retreiving meeting invite info to paste into the form
+Visit the CloudFront distribution domain name generated during the deployment and create an account. Paste the meeting invite and choose to schedule a time or to trigger the bot immediately. When possible, utilize a 'Copy' button when retreiving meeting invite info to paste into the form.
 
 ![Image](/images/FrontendForm.png)
 
@@ -23,7 +23,8 @@ Paste the meeting invite and choose to schedule a time or to trigger the bot imm
 
 This option triggers the bot immediately. 
 
-
+## Viewing Transcripts and Summaries
+For now, transcripts and summaries exist only in the S3 bucket created during deployment. To view transcripts, go to the bucket created by the deployment and look under the 'diarized-transcript' and 'call-summary' prefix. Future iterations will make these outputs viewable on the frontend. 
 
 ### Bot Scheduling Lambda
 
@@ -224,11 +225,12 @@ const invokeModel = async (
 - Summaries uploaded to S3.
 - Dynamo DB record updated with the summary's S3 location.
 
+
 ## Limitations
 
 - For optimal results, speakers are encouraged to use microphones or headphone speakers.
 - Amazon Transcribe supports speaker diarization for up to 10 speakers.
-- If speaker names are not mentioned, Bedrock will return generic speaker labels.
+- If speaker names are not mentioned, AWS Bedrock will return generic speaker labels.
 
 ## Deployment
 
