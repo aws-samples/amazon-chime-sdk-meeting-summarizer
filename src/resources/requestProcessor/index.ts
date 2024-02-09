@@ -58,7 +58,7 @@ export const lambdaHandler = async (
       meetingID: meetingId,
       meetingType: meetingType,
       scheduledTime: requestedDate.valueOf(),
-      dialIn : dialIn
+      dialIn: dialIn,
     });
   } else {
     console.log('Scheduling summarizer for future');
@@ -66,7 +66,7 @@ export const lambdaHandler = async (
       meetingID: meetingId,
       meetingType: meetingType,
       scheduledTime: requestedDate.valueOf(),
-      dialIn
+      dialIn,
     });
   }
   try {

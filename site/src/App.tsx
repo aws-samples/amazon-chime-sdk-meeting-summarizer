@@ -5,6 +5,7 @@ import { post } from 'aws-amplify/api';
 import { Amplify } from 'aws-amplify';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { Authenticator } from '@aws-amplify/ui-react';
+import { Hub } from 'aws-amplify/utils';
 import '@aws-amplify/ui-react/styles.css';
 import {
     ContentLayout,
@@ -22,6 +23,23 @@ import 'react-datetime/css/react-datetime.css';
 
 Amplify.configure(AmplifyConfig);
 
+interface AuthHub {
+    channel: string;
+    payload: {
+        event: string;
+        data?: {
+            username: string;
+            userId: string;
+            signInDetails: {
+                loginId: string;
+                authFlowType: string;
+            };
+        };
+    };
+    source: string;
+    patternInfo: [];
+}
+
 const getNext15MinIncrement = (): string => {
     const now = moment();
     const minutesToAdd = 15 - (now.minute() % 15);
@@ -34,15 +52,25 @@ const App: React.FC = () => {
     const [localTimeZone, setLocalTimeZone] = useState('');
     const [selectedDate, setSelectedDate] = useState<moment.Moment | string | null>(getNext15MinIncrement());
     const [authToken, setAuthToken] = useState<string | undefined | null>(null);
+    const [authInfo, setAuthInfo] = useState<AuthHub | null>(null);
+
+    const listener = (data: any) => {
+        console.log(`auth listener: ${JSON.stringify(data, null, 2)}`);
+        setAuthInfo(data);
+    };
+
+    Hub.listen('auth', listener);
 
     useEffect(() => {
         async function getToken() {
             const authToken = (await fetchAuthSession()).tokens?.idToken?.toString();
-            console.log(authToken);
             setAuthToken(authToken);
         }
-        getToken();
-    }, []);
+        if (authInfo && authInfo.payload.event == 'signedIn') {
+            console.log('signed in');
+            getToken();
+        }
+    }, [authInfo]);
 
     useEffect(() => {
         const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -61,7 +89,7 @@ const App: React.FC = () => {
     async function handleFutureMeeting() {
         if (!meetingInfo.trim()) {
             alert('Please enter meeting information before submitting.');
-            return; // Prevents further execution of the function
+            return;
         }
         const formattedDate = selectedDate!.toString();
         console.log(`formattedDate: ${formattedDate}`);
@@ -92,16 +120,11 @@ const App: React.FC = () => {
         } catch (error: any) {
             console.error('An error occurred during the POST request:', error);
             if (error.name === 'FetchError') {
-                // Check for a 502 status code
                 if (error.response && error.response.status === 502) {
                     console.error('Server returned a 502 Bad Gateway response.');
-                    // Handle the 502 error specifically
-                    // e.g., alert the user, retry the request, etc.
                 } else {
-                    // Handle other FetchErrors
                 }
             } else {
-                // Handle other types of errors
             }
         }
     }
