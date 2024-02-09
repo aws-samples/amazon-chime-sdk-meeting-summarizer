@@ -122,7 +122,7 @@ export const scheduleEventBridge = async ({
   meetingID,
   meetingType,
   scheduledTime,
-  dialIn
+  dialIn,
 }: {
   meetingID: string;
   meetingType: string;
@@ -156,7 +156,7 @@ export const scheduleEventBridge = async ({
           meetingID: meetingID,
           meetingType: meetingType,
           scheduledTime: scheduledTime,
-          dialIn : dialIn
+          dialIn: dialIn,
         }),
       },
     }),
@@ -191,7 +191,7 @@ export async function dialOut({
   meetingType,
   meetingID,
   scheduledTime,
-  dialIn
+  dialIn,
 }: {
   meetingType: string;
   meetingID: string;
@@ -228,7 +228,7 @@ export async function dialOut({
             SipMediaApplicationId: SMA_APP,
             ArgumentsMap: {
               meetingType: meetingType,
-              meetingID: meetingType
+              meetingID: meetingType,
             },
           }),
         );
@@ -242,7 +242,7 @@ export async function dialOut({
             SipMediaApplicationId: SMA_APP,
             ArgumentsMap: {
               meetingType: meetingType,
-              meetingID: meetingID
+              meetingID: meetingID,
             },
           }),
         );
@@ -263,7 +263,7 @@ export async function dialOut({
         console.log(response);
       } else if (meetingType === 'Teams') {
         console.log('Teams');
-        console.log(dialIn, meetingType, meetingID)
+        console.log(dialIn, meetingType, meetingID);
         const response = await chimeSdkClient.send(
           new CreateSipMediaApplicationCallCommand({
             FromPhoneNumber: SMA_PHONE,
@@ -271,7 +271,7 @@ export async function dialOut({
             SipMediaApplicationId: SMA_APP,
             ArgumentsMap: {
               meetingType: meetingType,
-              meetingID: meetingID
+              meetingID: meetingID,
             },
           }),
         );
