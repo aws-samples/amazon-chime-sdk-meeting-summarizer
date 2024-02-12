@@ -202,6 +202,9 @@ export async function dialOut({
   console.log(
     `dialing out meetingType: ${meetingType} MeetingId:${meetingID} at ${scheduledTime.toString()}`,
   );
+
+  const scheduledTime1 = scheduledTime.toString();
+
   if (meetingType && meetingID && scheduledTime) {
     console.log('SMA Caller Initiated');
     try {
@@ -215,6 +218,7 @@ export async function dialOut({
             ArgumentsMap: {
               meetingType: meetingType,
               meetingID: meetingID,
+              scheduledTime: scheduledTime1,
             },
           }),
         );
@@ -229,6 +233,7 @@ export async function dialOut({
             ArgumentsMap: {
               meetingType: meetingType,
               meetingID: meetingType,
+              scheduledTime: scheduledTime1,
             },
           }),
         );
@@ -243,6 +248,7 @@ export async function dialOut({
             ArgumentsMap: {
               meetingType: meetingType,
               meetingID: meetingID,
+              scheduledTime: scheduledTime1,
             },
           }),
         );
@@ -257,6 +263,7 @@ export async function dialOut({
             ArgumentsMap: {
               meetingType: meetingType,
               meetingID: meetingID,
+              scheduledTime: scheduledTime1,
             },
           }),
         );
@@ -272,6 +279,7 @@ export async function dialOut({
             ArgumentsMap: {
               meetingType: meetingType,
               meetingID: meetingID,
+              scheduledTime: scheduledTime1,
             },
           }),
         );
