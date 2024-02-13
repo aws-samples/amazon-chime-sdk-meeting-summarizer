@@ -238,6 +238,8 @@ const invokeModel = async (
 
 - yarn installed
 - AWS account
+- Anthropic Models enabled in the AWS Account: https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html 
+
 
 ### Deploy
 
