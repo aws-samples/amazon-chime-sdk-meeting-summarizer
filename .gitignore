@@ -58,3 +58,4 @@ dependabot.yml
 **/dist/**
 config.json
 !/.projenrc.ts
+site/public/config.json
