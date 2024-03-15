@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
     ContentLayout,
     Container,
-    Header,
     SpaceBetween,
     Button,
     FormField,
@@ -12,10 +11,7 @@ import moment from 'moment';
 import DateTime from 'react-datetime';
 import { Hub } from 'aws-amplify/utils';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { signOut } from 'aws-amplify/auth';
 import { post } from 'aws-amplify/api';
-import '@cloudscape-design/global-styles/index.css';
-import 'react-datetime/css/react-datetime.css';
 import '@aws-amplify/ui-react/styles.css';
 import '@cloudscape-design/global-styles/index.css';
 import 'react-datetime/css/react-datetime.css';
@@ -75,14 +71,6 @@ const Home: React.FC = () => {
         console.log(localTimeZone);
         setLocalTimeZone(localTimeZone);
     }, []);
-
-    async function handleSignOut() {
-        try {
-            await signOut();
-        } catch (error) {
-            console.log('error signing out: ', error);
-        }
-    }
 
     async function handleFutureMeeting() {
         if (!meetingInfo.trim()) {
@@ -164,44 +152,35 @@ const Home: React.FC = () => {
     }
 
     return (
-        <ContentLayout
-            header={
-                <SpaceBetween size="m">
-                    <Header variant="h1" actions={<Button onClick={handleSignOut}>Sign Out</Button>}>
-                        Amazon Chime SDK Meeting Summarizer
-                    </Header>
+
+        <Container>
+            <SpaceBetween size="m">
+                <FormField label="Meeting Information">
+                    <Textarea
+                        onChange={({ detail }) => setMeetingInfo(detail.value)}
+                        value={meetingInfo}
+                        rows={20}
+                        placeholder="Enter meeting information"
+                    />
+                </FormField>
+                <SpaceBetween size="m" direction="horizontal">
+                    <Button onClick={handlePresentMeeting}>Start Now</Button>
+                    <Button onClick={handleFutureMeeting}>Schedule Future Meeting</Button>
                 </SpaceBetween>
-            }
-        >
-            <Container>
-                <SpaceBetween size="m">
-                    <FormField label="Meeting Information">
-                        <Textarea
-                            onChange={({ detail }) => setMeetingInfo(detail.value)}
-                            value={meetingInfo}
-                            rows={20}
-                            placeholder="Enter meeting information"
-                        />
-                    </FormField>
-                    <SpaceBetween size="m" direction="horizontal">
-                        <Button onClick={handlePresentMeeting}>Start Now</Button>
-                        <Button onClick={handleFutureMeeting}>Schedule Future Meeting</Button>
-                    </SpaceBetween>
-                    <FormField label="Start Date/Time">
-                        <DateTime
-                            onChange={(detail) => {
-                                setSelectedDate(detail);
-                            }}
-                            initialValue={moment(getNext15MinIncrement()).format('MM/DD/YYYY h:mm A')}
-                            isValidDate={valid}
-                            timeConstraints={{
-                                minutes: { min: 0, max: 59, step: 15 },
-                            }}
-                        />
-                    </FormField>
-                </SpaceBetween>
-            </Container>
-        </ContentLayout>
+                <FormField label="Start Date/Time">
+                    <DateTime
+                        onChange={(detail) => {
+                            setSelectedDate(detail);
+                        }}
+                        initialValue={moment(getNext15MinIncrement()).format('MM/DD/YYYY h:mm A')}
+                        isValidDate={valid}
+                        timeConstraints={{
+                            minutes: { min: 0, max: 59, step: 15 },
+                        }}
+                    />
+                </FormField>
+            </SpaceBetween>
+        </Container>
     );
 
 };
