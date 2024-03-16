@@ -9,7 +9,6 @@ interface DropdownEvent {
 }
 
 const AppHeader: React.FC<{ userName: string }> = ({ userName }) => {
-
     const handleDropdownClick = (event: DropdownEvent) => {
         const itemId = event.detail.id;
         switch (itemId) {
@@ -20,7 +19,6 @@ const AppHeader: React.FC<{ userName: string }> = ({ userName }) => {
                 break;
         }
     };
-
     const handleSignOut = async () => {
         try {
             console.log('logout clicked');
@@ -29,7 +27,6 @@ const AppHeader: React.FC<{ userName: string }> = ({ userName }) => {
             console.error('Error signing out: ', error);
         }
     };
-
     const userMenuItems: ButtonDropdownProps.ItemOrGroup[] = [
         {
             id: 'signout',

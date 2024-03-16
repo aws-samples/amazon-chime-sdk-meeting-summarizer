@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import AppHeader from './components/header/AppHeader';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
-import '@aws-amplify/ui-react/styles.css';
-import '@cloudscape-design/global-styles/index.css';
-import 'react-datetime/css/react-datetime.css';
 import { Grid } from '@cloudscape-design/components';
+import { AuthContext } from './AuthContext';
 
 interface AuthEventData {
     payload: {
@@ -18,41 +16,50 @@ interface AuthEventData {
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [userEmail, setUserEmail] = useState<string>('');
+    const [authToken, setAuthToken] = useState<string | undefined | null>(null);
+
     useEffect(() => {
+        const updateAuthData = async () => {
+            try {
+                const session = await fetchAuthSession();
+                const accessToken = session.tokens?.idToken?.toString();
+                if (accessToken) {
+                    setAuthToken(accessToken);
+                } else {
+                    setAuthToken('');
+                }
+                const idToken = session.tokens?.idToken;
+                if (idToken) {
+                    const email = typeof idToken.payload.email === 'string' ? idToken.payload.email : '';
+                    setUserEmail(email);
+                } else {
+                    setUserEmail('');
+                }
+            } catch (error) {
+                console.error('Error fetching auth data: ', error);
+                setAuthToken('');
+                setUserEmail('');
+            }
+        };
         const authListener = (data: AuthEventData) => {
-            const { payload } = data;
-            if (payload.event === 'signIn' || payload.event === 'signOut') {
-                updateUserName();
+            if (data.payload.event === 'signIn' || data.payload.event === 'signOut') {
+                updateAuthData();
             }
         };
         const unsubscribe = Hub.listen('auth', authListener);
-        updateUserName();
-        return unsubscribe;
+        updateAuthData();
+        return () => unsubscribe();
     }, []);
 
-    const updateUserName = async () => {
-        try {
-            const session = await fetchAuthSession();
-            const idToken = session.tokens?.idToken;
-            if (idToken) {
-                const email = typeof idToken.payload.email === 'string' ? idToken.payload.email : '';
-                setUserEmail(email);
-            } else {
-                setUserEmail('');
-            }
-        } catch (error) {
-            console.error('Error fetching user info: ', error);
-            setUserEmail('');
-        }
-    };
-
     return (
-        <Grid gridDefinition={[{ colspan: 12 }, { colspan: 12 }]}>
-            <div style={{ backgroundColor: '#232f3e' }}>
-                <AppHeader userName={userEmail} />
-            </div>
-            <div>{children}</div>
-        </Grid>
+        <AuthContext.Provider value={{ authToken, setAuthToken, userEmail, setUserEmail }}>
+            <Grid gridDefinition={[{ colspan: 12 }, { colspan: 12 }]}>
+                <div style={{ backgroundColor: '#232f3e' }}>
+                    <AppHeader userName={userEmail} />
+                </div>
+                <div>{children}</div>
+            </Grid>
+        </AuthContext.Provider>
     );
 };
 
