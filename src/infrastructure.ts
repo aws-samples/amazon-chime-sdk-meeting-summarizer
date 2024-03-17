@@ -72,6 +72,14 @@ export class Infrastructure extends Construct {
             }),
           ],
         }),
+        ['DynamoDBPolicy']: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              resources: ['*'],
+              actions: ['dynamodb:Scan'],
+            }),
+          ],
+        }),
       },
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName(
@@ -112,7 +120,7 @@ export class Infrastructure extends Construct {
           'Authorization',
           'x-amz-security-token',
         ],
-        allowMethods: ['OPTIONS', 'POST'],
+        allowMethods: ['OPTIONS', 'POST', 'GET'],
         allowCredentials: true,
         allowOrigins: ['*'],
       },
@@ -136,6 +144,11 @@ export class Infrastructure extends Construct {
     );
 
     request.addMethod('POST', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    request.addMethod('GET', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });

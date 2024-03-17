@@ -10,6 +10,8 @@ import {
   scheduleEventBridge,
 } from './utils';
 
+import { DynamoDB } from 'aws-sdk';
+
 const response: APIGatewayProxyResult = {
   body: '',
   statusCode: 200,
@@ -25,57 +27,121 @@ export const lambdaHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   console.log(event);
-  const body = JSON.parse(event.body!);
 
-  const input = createInvokeModelInput(createPrompt(body.meetingInfo));
-  console.log(`input: ${JSON.stringify(input, null, 2)}`);
-  const bedrockResponse = JSON.parse(
-    new TextDecoder().decode((await invokeModel(input)).body),
-  );
-  console.log(`bedrockResponse: ${JSON.stringify(bedrockResponse, null, 2)}`);
-  let { meetingId, meetingType, dialIn } = JSON.parse(bedrockResponse.completion);
-  if (!meetingId || !meetingType) {
-    response.body = JSON.stringify('bad request');
-    response.statusCode = 500;
-    return response;
-  }
-  meetingId = meetingId.replace(/\s/g, ''); // Remove spaces from meetingId
-
-  console.log(`meetingID: ${meetingId} meetingType: ${meetingType}`);
-  console.log(`body.formattedDate: ${body.formattedDate}`);
-  const requestedDate = moment(body.formattedDate);
-  console.log(`requestedDate: ${requestedDate}`);
-  await writeDynamo({
-    meetingID: meetingId,
-    meetingType: meetingType,
-    scheduledTime: requestedDate.valueOf(),
-  });
-
-  const now = moment();
-  if (requestedDate.isBefore(now)) {
-    console.log('Starting summarizer now');
-    await dialOut({
-      meetingID: meetingId,
-      meetingType: meetingType,
-      scheduledTime: requestedDate.valueOf(),
-      dialIn: dialIn,
-    });
-  } else {
-    console.log('Scheduling summarizer for future');
-    await scheduleEventBridge({
-      meetingID: meetingId,
-      meetingType: meetingType,
-      scheduledTime: requestedDate.valueOf(),
-      dialIn,
-    });
-  }
   try {
-    response.body = JSON.stringify('good request');
-    return response;
-  } catch (err) {
-    console.log(err);
-    response.body = JSON.stringify('bad request');
-    response.statusCode = 500;
-    return response;
+
+    if (event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body!);
+      const input = createInvokeModelInput(createPrompt(body.meetingInfo));
+
+      console.log(`input: ${JSON.stringify(input, null, 2)}`);
+
+      const bedrockResponse = JSON.parse(
+        new TextDecoder().decode((await invokeModel(input)).body),
+      );
+
+      console.log(`bedrockResponse: ${JSON.stringify(bedrockResponse, null, 2)}`);
+
+      let { meetingId, meetingType, dialIn } = JSON.parse(bedrockResponse.completion);
+
+      if (!meetingId || !meetingType) {
+        response.body = JSON.stringify('bad request');
+        response.statusCode = 500;
+        return response;
+      }
+
+      meetingId = meetingId.replace(/\s/g, ''); // Remove spaces from meetingId
+
+      console.log(`meetingID: ${meetingId} meetingType: ${meetingType}`);
+      console.log(`body.formattedDate: ${body.formattedDate}`);
+
+      const requestedDate = moment(body.formattedDate);
+
+      console.log(`requestedDate: ${requestedDate}`);
+
+      await writeDynamo({
+        meetingID: meetingId,
+        meetingType: meetingType,
+        scheduledTime: requestedDate.valueOf(),
+      });
+
+      const now = moment();
+
+      if (requestedDate.isBefore(now)) {
+
+        console.log('Starting summarizer now');
+
+        await dialOut({
+          meetingID: meetingId,
+          meetingType: meetingType,
+          scheduledTime: requestedDate.valueOf(),
+          dialIn: dialIn,
+        });
+      } else {
+        console.log('Scheduling summarizer for future');
+
+        await scheduleEventBridge({
+          meetingID: meetingId,
+          meetingType: meetingType,
+          scheduledTime: requestedDate.valueOf(),
+          dialIn,
+        });
+      }
+
+      try {
+        response.body = JSON.stringify('good request');
+        return response;
+      } catch (err) {
+        console.log(err);
+
+        response.body = JSON.stringify('bad request');
+        response.statusCode = 500;
+
+        return response;
+      }
+    }
+
+    // Get method for the frontend table
+    if (event.httpMethod === 'GET') {
+      const dynamoDBClient = new DynamoDB.DocumentClient();
+      const tableName = '<table-name>';
+      const items = await scanDynamoDBTable(dynamoDBClient, tableName);
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(items),
+        headers: response.headers,
+      };
+    }
+
+    return {
+      statusCode: 405,
+      body: JSON.stringify('Method Not Allowed'),
+      headers: response.headers,
+    };
   }
+
+  catch (err) {
+    console.error(err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify('Internal Server Error'),
+      headers: response.headers,
+    };
+  }
+
 };
+
+async function scanDynamoDBTable(dynamoDBClient: DynamoDB.DocumentClient, tableName: string) {
+  const params = {
+    TableName: tableName,
+  };
+
+  try {
+    const scanResult = await dynamoDBClient.scan(params).promise();
+    return scanResult.Items;
+  } catch (err) {
+    console.error("Error scanning DynamoDB table:", err);
+    throw err;
+  }
+}

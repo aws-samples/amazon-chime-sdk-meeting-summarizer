@@ -59,72 +59,50 @@ function MeetingHandler() {
         }
     };
 
-    async function handleFutureMeeting() {
-        if (!meetingInfo.trim()) {
-            alert('Please enter meeting information before submitting.');
-            return;
-        }
-        const formattedDate = selectedDate!.toString();
-        console.log(`formattedDate: ${formattedDate}`);
-
-        const requestData = {
-            meetingInfo,
-            formattedDate,
-            localTimeZone,
-        };
-        console.log(`requestedData: ${JSON.stringify(requestData, null, 2)}`);
-        try {
-            const restOperation = post({
-                apiName: 'request',
-                path: 'request',
-                options: {
-                    headers: {
-                        Authorization: authToken!,
-                    },
-                    body: requestData,
-                },
-            });
-
-            const { body } = await restOperation.response;
-            const response = await body.json();
-
-            console.log('POST call succeeded');
-            console.log(response);
-        } catch (error: any) {
-            console.error('An error occurred during the POST request:', error);
-            if (error.name === 'FetchError') {
-                if (error.response && error.response.status === 502) {
-                    console.error('Server returned a 502 Bad Gateway response.');
-                } else {
-                }
-            } else {
-            }
-        }
-    }
-
-    async function handlePresentMeeting() {
+    async function handleMeeting(isImmediate = false) {
         if (!meetingInfo.trim()) {
             setShowWarning(true);
             return;
         }
-        setShowInProgress(true);
-        try {
-            const now = moment();
-            const formattedDate = now.toString();
-            const requestData = { meetingInfo, formattedDate, localTimeZone };
+        setShowWarning(false);
 
-            const restOperation = await post({
+        if (!authToken) {
+            setErrorMessage("Authorization token is missing.");
+            setShowError(true);
+            return;
+        }
+
+        setShowInProgress(true);
+
+        try {
+            let formattedDate;
+            if (isImmediate) {
+                formattedDate = moment().format('YYYY-MM-DDTHH:mm:ss');
+                console.log(formattedDate)
+            } else {
+                if (!selectedDate || !selectedTime) {
+                    setShowWarning(true);
+                    setShowInProgress(false);
+                    return;
+                }
+                const date = moment(selectedDate).format('YYYY-MM-DD');
+                const time = moment(selectedTime, 'HH:mm').format('HH:mm:ss');
+                formattedDate = `${date}T${time}`;
+                console.log(formattedDate)
+            }
+
+            const requestData = { meetingInfo, formattedDate, localTimeZone };
+            console.log(requestData)
+
+            const response = await post({
                 apiName: 'request',
                 path: 'request',
                 options: {
-                    headers: {
-                        Authorization: authToken!,
-                    },
+                    headers: { Authorization: authToken },
                     body: requestData,
                 },
-            });
+            }).response;
 
-            const response = await restOperation.response;
             setShowInProgress(false);
 
             if (response.statusCode === 200) {
@@ -140,6 +118,7 @@ function MeetingHandler() {
             } else {
                 setErrorMessage('An unexpected error occurred');
             }
+            setShowError(true);
         }
     }
 
@@ -198,7 +177,7 @@ function MeetingHandler() {
                             </FormField>
                             {!scheduleForLater && (
                                 <Button
-                                    onClick={handlePresentMeeting}>
+                                    onClick={() => handleMeeting(true)}>
                                     <span style={{ marginRight: '8px' }}>
                                         <Icon name="call" />
                                     </span>
@@ -239,11 +218,11 @@ function MeetingHandler() {
                                         <TimeInput
                                             onChange={({ detail }) => setSelectedTime(detail.value)}
                                             value={selectedTime}
-                                            placeholder="15:30"
+                                            placeholder="15:30:00"
                                         />
                                     </FormField>
                                     <Button
-                                        onClick={handleFutureMeeting}>
+                                        onClick={() => handleMeeting(false)}>
                                         <span style={{ marginRight: '8px' }}>
                                             <Icon name="calendar" />
                                         </span>

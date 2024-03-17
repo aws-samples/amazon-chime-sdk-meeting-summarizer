@@ -1,29 +1,22 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Pagination, Table, PropertyFilter, PropertyFilterProps, Button, Container, Popover, StatusIndicator } from '@cloudscape-design/components';
+import { AuthContext } from '../../AuthContext';
+import { get } from 'aws-amplify/api';
 
-interface TableItem {
+interface ApiResponseItem {
     call_id: string;
     scheduled_time: string;
     meeting_type: string;
     summary: string;
     transcript: string;
-    meeting_mp3: string;
+    // meeting_mp3: string;
 }
-
-const mockApiData = [
-    { call_id: "9216995623", scheduled_time: "1710460927000", meeting_type: "Chime", meeting_mp3: "4ab5f391-e9ed-4f59-9bbd-af14d5530948-0.wav", summary: "https://mock.s3.amazonaws.com/call-summary/9216995623.1710461075000.txt", transcript: "https://mock.s3.amazonaws.com/diarized-transcript/9216995623.1710461075000.txt" },
-    { call_id: "9216995623", scheduled_time: "1710460927000", meeting_type: "Chime", meeting_mp3: "4ab5f391-e9ed-4f59-9bbd-af14d5530948-0.wav", summary: "https://mock.s3.amazonaws.com/call-summary/9216995623.1710461075000.txt", transcript: "https://mock.s3.amazonaws.com/diarized-transcript/9216995623.1710461075000.txt" },
-    { call_id: "9216995623", scheduled_time: "1710460927000", meeting_type: "Chime", meeting_mp3: "4ab5f391-e9ed-4f59-9bbd-af14d5530948-0.wav", summary: "https://mock.s3.amazonaws.com/call-summary/9216995623.1710461075000.txt", transcript: "https://mock.s3.amazonaws.com/diarized-transcript/9216995623.1710461075000.txt" },
-    { call_id: "9216995623", scheduled_time: "1710460927000", meeting_type: "Chime", meeting_mp3: "4ab5f391-e9ed-4f59-9bbd-af14d5530948-0.wav", summary: "https://mock.s3.amazonaws.com/call-summary/9216995623.1710461075000.txt", transcript: "https://mock.s3.amazonaws.com/diarized-transcript/9216995623.1710461075000.txt" },
-    { call_id: "9216995623", scheduled_time: "1710460927000", meeting_type: "Chime", meeting_mp3: "4ab5f391-e9ed-4f59-9bbd-af14d5530948-0.wav", summary: "https://mock.s3.amazonaws.com/call-summary/9216995623.1710461075000.txt", transcript: "https://mock.s3.amazonaws.com/diarized-transcript/9216995623.1710461075000.txt" },
-    { call_id: "9216995623", scheduled_time: "1710460927000", meeting_type: "Chime", meeting_mp3: "4ab5f391-e9ed-4f59-9bbd-af14d5530948-0.wav", summary: "https://mock.s3.amazonaws.com/call-summary/9216995623.1710461075000.txt", transcript: "https://mock.s3.amazonaws.com/diarized-transcript/9216995623.1710461075000.txt" },
-];
 
 function extractFileName(url: string): string {
     return url.split('/').pop() ?? '';
 }
 
-const handleChatClick = (item: TableItem) => {
+const handleChatClick = (item: ApiResponseItem) => {
     console.log("Chat clicked for item:", item);
 };
 
@@ -31,27 +24,27 @@ const columnDefinitions = [
     {
         id: 'call_id',
         header: 'Call ID',
-        cell: (item: TableItem) => item.call_id
+        cell: (item: ApiResponseItem) => item.call_id
     },
     {
         id: 'scheduled_time',
         header: 'Scheduled Time',
-        cell: (item: TableItem) => item.scheduled_time
+        cell: (item: ApiResponseItem) => item.scheduled_time
     },
     {
         id: 'meeting_type',
         header: 'Meeting Type',
-        cell: (item: TableItem) => item.meeting_type
+        cell: (item: ApiResponseItem) => item.meeting_type
     },
-    {
-        id: 'meeting_mp3',
-        header: 'Meeting Audio',
-        cell: (item: TableItem) => <a href={item.meeting_mp3} target="_blank" rel="noopener noreferrer">{item.meeting_mp3}</a>
-    },
+    // {
+    //     id: 'meeting_mp3',
+    //     header: 'Meeting Audio',
+    //     cell: (item: TableItem) => <a href={item.meeting_mp3} target="_blank" rel="noopener noreferrer">{item.meeting_mp3}</a>
+    // },
     {
         id: 'summary',
         header: 'Summary',
-        cell: (item: TableItem) => {
+        cell: (item: ApiResponseItem) => {
             const fileName = extractFileName(item.summary);
             return <a href={item.summary} target="_blank" rel="noopener noreferrer">{fileName}</a>;
         }
@@ -59,7 +52,7 @@ const columnDefinitions = [
     {
         id: 'transcript',
         header: 'Transcript',
-        cell: (item: TableItem) => {
+        cell: (item: ApiResponseItem) => {
             const fileName = extractFileName(item.transcript);
             return <a href={item.transcript} target="_blank" rel="noopener noreferrer">{fileName}</a>;
         },
@@ -67,7 +60,7 @@ const columnDefinitions = [
     {
         id: 'chat',
         header: 'Chat',
-        cell: (item: TableItem) => (
+        cell: (item: ApiResponseItem) => (
             <Popover
                 dismissButton={false}
                 position="top"
@@ -92,13 +85,65 @@ const columnDefinitions = [
 ];
 
 function FilteredTable() {
-    const [selectedItems, setSelectedItems] = useState<TableItem[]>([]);
-    const [currentPageIndex, setCurrentPageIndex] = useState(1);
+    const [selectedItems, setSelectedItems] = useState<ApiResponseItem[]>([]);
     const [filteringQuery, setFilteringQuery] = useState<PropertyFilterProps.Query>({ tokens: [], operation: 'and' });
+    const [errorMessage, setErrorMessage] = useState('');
+    const [apiResponse, setApiResponse] = useState<ApiResponseItem[]>([]);
+    const [currentPageIndex, setCurrentPageIndex] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
-    const pageSize = 10;
-    const paginatedItems = mockApiData.slice((currentPageIndex - 1) * pageSize, currentPageIndex * pageSize);
-    const totalPages = Math.ceil(mockApiData.length / pageSize);
+    const { authToken } = useContext(AuthContext);
+
+    const paginatedItems = apiResponse.slice((currentPageIndex - 1) * pageSize, currentPageIndex * pageSize);
+    const totalPages = Math.ceil(apiResponse.length / pageSize);
+
+    useEffect(() => {
+        async function getTableData() {
+
+            if (!authToken) {
+                setErrorMessage("Authorization token is missing.");
+                console.log(errorMessage)
+                return;
+            }
+
+            try {
+                const restOperation = await get({
+                    apiName: 'request',
+                    path: 'request',
+                    options: {
+                        headers: { Authorization: authToken },
+                    },
+                });
+
+                const response = await restOperation.response;
+
+                if (response.statusCode === 200) {
+                    const responseBody = await response.body.json();
+
+                    if (Array.isArray(responseBody) && responseBody.every(item => {
+                        return typeof item === 'object' && item !== null &&
+                            'call_id' in item && 'scheduled_time' in item &&
+                            'meeting_type' in item && 'summary' in item && 'transcript' in item;
+                    })) {
+                        setApiResponse(responseBody as unknown as ApiResponseItem[]);
+                    } else {
+                        setErrorMessage('Invalid response format');
+                    }
+                } else {
+                    setErrorMessage('Failed to retrieve data');
+                }
+
+            } catch (error) {
+                if (error instanceof Error) {
+                    setErrorMessage(error.message || 'An error occurred');
+                } else {
+                    setErrorMessage('An unexpected error occurred');
+                }
+            }
+        }
+        getTableData();
+
+    }, [authToken]);
 
     const filteringProperties = [
         {
