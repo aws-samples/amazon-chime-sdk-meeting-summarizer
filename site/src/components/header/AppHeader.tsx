@@ -50,7 +50,7 @@ const AppHeader: React.FC<{ userName: string }> = ({ userName }) => {
                         <Icon name="user-profile" /> {userName}
                     </ButtonDropdown>
                 }>
-                <span style={{ color: 'white' }}>Amazon Chime SDK Meeting Summarizer</span>
+                <span style={{ color: 'white' }}>Amazon Chime Meeting Summarizer</span>
             </Header>
         </div>
     );

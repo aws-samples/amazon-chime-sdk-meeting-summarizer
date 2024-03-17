@@ -53,11 +53,13 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ authToken, setAuthToken, userEmail, setUserEmail }}>
-            <Grid gridDefinition={[{ colspan: 12 }, { colspan: 12 }]}>
+            <Grid disableGutters gridDefinition={[{ colspan: 12 }, { colspan: 12 }]}>
                 <div style={{ backgroundColor: '#232f3e' }}>
                     <AppHeader userName={userEmail} />
                 </div>
-                <div>{children}</div>
+                <div style={{ padding: '15px' }}>
+                    {children}
+                </div>
             </Grid>
         </AuthContext.Provider>
     );
