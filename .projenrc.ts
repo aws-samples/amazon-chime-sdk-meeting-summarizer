@@ -30,6 +30,8 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     'aws-lambda',
     'dotenv',
     'moment',
+    "moment-timezone"
+
   ],
   autoApproveOptions: {
     secret: 'GITHUB_TOKEN',
