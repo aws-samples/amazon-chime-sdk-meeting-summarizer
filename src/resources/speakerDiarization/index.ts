@@ -207,7 +207,7 @@ const updateDynamo = async (
           call_id: { S: dynamoVariables.meetingID },
           scheduled_time: { S: dynamoVariables.scheduledTime },
         },
-        UpdateExpression: 'SET summary = :value',
+        UpdateExpression: 'SET transcript = :value',
         ExpressionAttributeValues: {
           ':value': { S: value },
         },

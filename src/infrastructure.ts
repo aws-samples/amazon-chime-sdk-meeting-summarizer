@@ -15,6 +15,7 @@ import {
   ServicePrincipal,
   PolicyDocument,
   PolicyStatement,
+  CompositePrincipal,
 } from 'aws-cdk-lib/aws-iam';
 import { Runtime, Architecture, Function } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -42,7 +43,10 @@ export class Infrastructure extends Construct {
     super(scope, id);
 
     const infrastructureRole = new Role(this, 'infrastructureRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      assumedBy: new CompositePrincipal(
+        new ServicePrincipal('lambda.amazonaws.com'),
+        new ServicePrincipal('scheduler.amazonaws.com'),
+      ),
       inlinePolicies: {
         ['BedrockPolicy']: new PolicyDocument({
           statements: [
@@ -64,7 +68,7 @@ export class Infrastructure extends Construct {
           statements: [
             new PolicyStatement({
               resources: ['*'],
-              actions: ['scheduler:CreateSchedule'],
+              actions: ['scheduler:CreateSchedule', 'iam:PassRole'],
             }),
           ],
         }),
