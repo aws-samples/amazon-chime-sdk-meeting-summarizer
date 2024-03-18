@@ -92,11 +92,10 @@ function MeetingHandler() {
             }
 
             const requestData = { meetingInfo, formattedDate, localTimeZone };
-            console.log(requestData)
 
             const response = await post({
                 apiName: 'request',
-                path: 'request',
+                path: 'createMeeting',
                 options: {
                     headers: { Authorization: authToken },
                     body: requestData,

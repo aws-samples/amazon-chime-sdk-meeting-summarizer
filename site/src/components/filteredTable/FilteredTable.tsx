@@ -4,9 +4,9 @@ import { AuthContext } from '../../AuthContext';
 import { get } from 'aws-amplify/api';
 
 interface ApiResponseItem {
-    call_id: string;
-    scheduled_time: string;
-    meeting_type: string;
+    callId: string;
+    scheduledTime: string;
+    meetingType: string;
     summary: string;
     transcript: string;
     // meeting_mp3: string;
@@ -22,19 +22,19 @@ const handleChatClick = (item: ApiResponseItem) => {
 
 const columnDefinitions = [
     {
-        id: 'call_id',
+        id: 'callId',
         header: 'Call ID',
-        cell: (item: ApiResponseItem) => item.call_id
+        cell: (item: ApiResponseItem) => item.callId
     },
     {
-        id: 'scheduled_time',
+        id: 'scheduledTime',
         header: 'Scheduled Time',
-        cell: (item: ApiResponseItem) => item.scheduled_time
+        cell: (item: ApiResponseItem) => item.scheduledTime
     },
     {
-        id: 'meeting_type',
+        id: 'meetingType',
         header: 'Meeting Type',
-        cell: (item: ApiResponseItem) => item.meeting_type
+        cell: (item: ApiResponseItem) => item.meetingType
     },
     // {
     //     id: 'meeting_mp3',
@@ -109,7 +109,7 @@ function FilteredTable() {
             try {
                 const restOperation = await get({
                     apiName: 'request',
-                    path: 'request',
+                    path: 'getMeetings',
                     options: {
                         headers: { Authorization: authToken },
                     },
@@ -122,8 +122,8 @@ function FilteredTable() {
 
                     if (Array.isArray(responseBody) && responseBody.every(item => {
                         return typeof item === 'object' && item !== null &&
-                            'call_id' in item && 'scheduled_time' in item &&
-                            'meeting_type' in item && 'summary' in item && 'transcript' in item;
+                            'callId' in item && 'scheduledTime' in item &&
+                            'meetingType' in item && 'summary' in item && 'transcript' in item;
                     })) {
                         setApiResponse(responseBody as unknown as ApiResponseItem[]);
                     } else {
@@ -147,21 +147,21 @@ function FilteredTable() {
 
     const filteringProperties = [
         {
-            key: 'call_id',
+            key: 'callId',
             label: 'Call ID',
             dataType: 'string',
             groupValuesLabel: 'Call ID Values',
             propertyLabel: 'Call ID'
         },
         {
-            key: 'scheduled_time',
+            key: 'scheduledTime',
             label: 'Scheduled Time',
             dataType: 'string',
             groupValuesLabel: 'Scheduled Time Values',
             propertyLabel: 'Scheduled Time'
         },
         {
-            key: 'meeting_type',
+            key: 'meetingType',
             label: 'Meeting Type',
             dataType: 'string',
             groupValuesLabel: 'Meeting Type Values',

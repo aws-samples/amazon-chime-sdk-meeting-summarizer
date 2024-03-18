@@ -46,6 +46,7 @@ export class Infrastructure extends Construct {
       assumedBy: new CompositePrincipal(
         new ServicePrincipal('lambda.amazonaws.com'),
         new ServicePrincipal('scheduler.amazonaws.com'),
+        new ServicePrincipal('dynamodb.amazonaws.com'),
       ),
       inlinePolicies: {
         ['BedrockPolicy']: new PolicyDocument({
@@ -68,7 +69,14 @@ export class Infrastructure extends Construct {
           statements: [
             new PolicyStatement({
               resources: ['*'],
-              actions: ['scheduler:CreateSchedule', 'iam:PassRole'],
+              actions: [
+                'scheduler:CreateSchedule',
+                'scheduler:GetSchedule',
+                'scheduler:GetScheduleGroup',
+                'scheduler:ListScheduleGroups',
+                'scheduler:ListSchedules',
+                'iam:PassRole'
+              ],
             }),
           ],
         }),
@@ -137,18 +145,18 @@ export class Infrastructure extends Construct {
       cognitoUserPools: [props.userPool],
     });
 
-    const request = api.root.addResource('request');
-
     const requestIntegration = new LambdaIntegration(
       this.requestProcessorLambda,
     );
 
-    request.addMethod('POST', requestIntegration, {
+    const createMeeting = api.root.addResource('createMeeting');
+    const getMeetings = api.root.addResource('getMeetings');
+
+    createMeeting.addMethod('POST', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
-
-    request.addMethod('GET', requestIntegration, {
+    getMeetings.addMethod('GET', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
