@@ -17,14 +17,14 @@ export const lambdaHandler = async (
 
     case '/createMeeting':
       if (event.httpMethod === 'POST') {
-        return await parseAndHandleCreateMeeting(event);
+        return parseAndHandleCreateMeeting(event);
       }
       return methodNotAllowedResponse();
 
     case '/getMeetings':
       if (event.httpMethod === 'GET') {
         const meetingType = event.queryStringParameters?.type === 'Scheduled' ? 'Scheduled' : 'Past';
-        return await parseAndHandleGetMeetings(meetingType);
+        return parseAndHandleGetMeetings(meetingType);
       }
       return methodNotAllowedResponse();
 
@@ -35,7 +35,7 @@ export const lambdaHandler = async (
           const inputText = body.inputText.trim();
 
           if (inputText) {
-            return await retrieveAndGenerate(inputText);
+            return retrieveAndGenerate(inputText);
           } else {
             return createApiResponse(JSON.stringify('Missing sessionId or inputText'), 400);
           }

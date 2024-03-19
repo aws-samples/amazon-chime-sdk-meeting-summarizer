@@ -31,7 +31,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     'aws-lambda',
     'dotenv',
     'moment',
-    "moment-timezone"
+    'moment-timezone',
 
   ],
   autoApproveOptions: {

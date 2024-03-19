@@ -64,7 +64,7 @@ export class Infrastructure extends Construct {
                 'bedrock:InvokeModelWithResponseStream',
                 'bedrock:ListAgentKnowledgeBases',
                 'bedrock:Retrieve',
-                'bedrock:RetrieveAndGenerate'
+                'bedrock:RetrieveAndGenerate',
               ],
             }),
           ],
@@ -87,7 +87,7 @@ export class Infrastructure extends Construct {
                 'scheduler:GetScheduleGroup',
                 'scheduler:ListScheduleGroups',
                 'scheduler:ListSchedules',
-                'iam:PassRole'
+                'iam:PassRole',
               ],
             }),
           ],
