@@ -7,7 +7,6 @@ import {
     Textarea,
     Calendar,
     TimeInput,
-    Select,
     Toggle,
     Icon,
     Flashbar
@@ -19,14 +18,12 @@ import '@cloudscape-design/global-styles/index.css';
 import 'react-datetime/css/react-datetime.css';
 
 import { AuthContext } from '../../AuthContext';
-import { SelectOption, SupportedLanguages } from './SupportedLanguageOptions';
 
 function MeetingHandler() {
     const [localTimeZone, setLocalTimeZone] = useState('');
     const [meetingInfo, setMeetingInfo] = useState('');
     const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
     const [selectedTime, setSelectedTime] = useState('');
-    const [selectedLanguage, setSelectedLanguage] = useState<SelectOption>(SupportedLanguages[0]);
     const [scheduleForLater, setScheduleForLater] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
     const [showInProgress, setShowInProgress] = useState(false);
@@ -47,15 +44,6 @@ function MeetingHandler() {
             setSelectedDate(newDate);
         } else {
             console.error("Selected date is invalid");
-        }
-    };
-
-    const handleLanguageChange = (option: any) => {
-        if (option && option.label) {
-            const language = SupportedLanguages.find(lang => lang.value === option.value);
-            if (language) {
-                setSelectedLanguage(language);
-            }
         }
     };
 
@@ -170,7 +158,7 @@ function MeetingHandler() {
                                 <Textarea
                                     onChange={({ detail }) => setMeetingInfo(detail.value)}
                                     value={meetingInfo}
-                                    rows={scheduleForLater ? 22 : 10}
+                                    rows={scheduleForLater ? 19 : 10}
                                     placeholder="Enter meeting information"
                                 />
                             </FormField>
@@ -180,24 +168,13 @@ function MeetingHandler() {
                                     <span style={{ marginRight: '8px' }}>
                                         <Icon name="call" />
                                     </span>
-                                    Start Now
+                                    Start now
                                 </Button>
                             )}
                         </SpaceBetween>
                     </div>
                     <div style={{ width: '40vh' }}>
                         <SpaceBetween size="m" direction="vertical">
-                            <div>
-                                <p style={{ fontWeight: 'bold' }}>What language will be spoken during the call?</p>
-                                <Select
-                                    selectedOption={selectedLanguage}
-                                    onChange={({ detail }) => handleLanguageChange(detail.selectedOption)}
-                                    options={SupportedLanguages.map(lang => ({
-                                        label: lang.label,
-                                        value: lang.value
-                                    }))}
-                                />
-                            </div>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <span style={{ marginRight: '10px', fontWeight: 'bold' }}>Schedule for later:</span>
                                 <Toggle

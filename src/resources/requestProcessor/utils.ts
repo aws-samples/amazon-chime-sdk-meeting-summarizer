@@ -6,6 +6,12 @@ import {
 } from '@aws-sdk/client-bedrock-runtime';
 
 import {
+  BedrockAgentRuntimeClient,
+  RetrieveAndGenerateCommand,
+  RetrieveAndGenerateConfiguration
+} from "@aws-sdk/client-bedrock-agent-runtime";
+
+import {
   ChimeSDKVoiceClient,
   CreateSipMediaApplicationCallCommand,
 } from '@aws-sdk/client-chime-sdk-voice';
@@ -35,11 +41,15 @@ const SMA_APP = process.env.SMA_APP || '';
 const EVENTBRIDGE_TARGET_LAMBDA = process.env.EVENTBRIDGE_TARGET_LAMBDA || '';
 const EVENTBRIDGE_GROUP_NAME = process.env.EVENTBRIDGE_GROUP_NAME || '';
 const EVENTBRIDGE_LAMBDA_ROLE = process.env.EVENTBRIDGE_LAMBDA_ROLE || '';
+const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID || '';
+const MODEL_ARN = process.env.MODEL_ARN || '';
 
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const schedulerClient = new SchedulerClient({ region: AWS_REGION });
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const chimeSdkClient = new ChimeSDKVoiceClient({ region: AWS_REGION });
+const bedrockRetrieveClient = new BedrockAgentRuntimeClient({ region: AWS_REGION });
+
 
 interface httpResponse {
   statusCode: number;
@@ -136,6 +146,36 @@ export function createApiResponse(body: string, statusCode: number = 200): APIGa
   };
 }
 
+export const retrieveAndGenerate = async (
+  inputText: string,
+  // sessionId: string
+): Promise<APIGatewayProxyResult> => {
+  const retrieveAndGenerateConfig: RetrieveAndGenerateConfiguration = {
+    type: 'KNOWLEDGE_BASE',
+    knowledgeBaseConfiguration: {
+      knowledgeBaseId: KNOWLEDGE_BASE_ID,
+      modelArn: MODEL_ARN,
+    },
+  };
+
+  const input = {
+    // sessionId: sessionId,
+    input: {
+      text: inputText,
+    },
+    retrieveAndGenerateConfiguration: retrieveAndGenerateConfig,
+  };
+
+  try {
+    const command = new RetrieveAndGenerateCommand(input);
+    const response = await bedrockRetrieveClient.send(command);
+    return createApiResponse(JSON.stringify(response));
+  } catch (err) {
+    console.error("Error in retrieveAndGenerate:", err);
+    throw err;
+  }
+};
+
 // Private Functions after refactoring
 
 async function scanDynamoDBTable() {
@@ -209,7 +249,10 @@ const listSchedulesInGroup = async () => {
 
 const getScheduleDetails = async (scheduleName: string) => {
   try {
-    const command = new GetScheduleCommand({ Name: scheduleName });
+    const command = new GetScheduleCommand({
+      Name: scheduleName,
+      GroupName: EVENTBRIDGE_GROUP_NAME
+    });
     const response = await schedulerClient.send(command);
     return response;
   } catch (err) {

@@ -5,6 +5,7 @@ import {
   methodNotAllowedResponse,
   parseAndHandleCreateMeeting,
   parseAndHandleGetMeetings,
+  retrieveAndGenerate,
 } from './utils';
 
 export const lambdaHandler = async (
@@ -26,6 +27,24 @@ export const lambdaHandler = async (
         return await parseAndHandleGetMeetings(meetingType);
       }
       return methodNotAllowedResponse();
+
+    case '/retrieveAndGenerate':
+      if (event.httpMethod === 'POST') {
+        if (event.body) {
+          const body = JSON.parse(event.body);
+          const inputText = body.inputText.trim();
+
+          if (inputText) {
+            return await retrieveAndGenerate(inputText);
+          } else {
+            return createApiResponse(JSON.stringify('Missing sessionId or inputText'), 400);
+          }
+        } else {
+          return createApiResponse(JSON.stringify('No request body found'), 400);
+        }
+      }
+      return methodNotAllowedResponse();
+
 
     default:
       return createApiResponse(JSON.stringify('Not Found'), 404);

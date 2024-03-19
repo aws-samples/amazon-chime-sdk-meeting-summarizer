@@ -34,3 +34,4 @@ a {
     color: #0000EE; 
   }
   
+  iframe#webpack-dev-server-client-overlay{display:none!important}
