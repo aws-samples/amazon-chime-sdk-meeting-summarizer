@@ -153,7 +153,7 @@ export const retrieveAndGenerate = async (
   const retrieveAndGenerateConfig: RetrieveAndGenerateConfiguration = {
     type: 'KNOWLEDGE_BASE',
     knowledgeBaseConfiguration: {
-      knowledgeBaseId: KNOWLEDGE_BASE_ID,
+      knowledgeBaseId: 'KNOWLEDGE_BASE_ID',
       modelArn: MODEL_ARN,
     },
   };
