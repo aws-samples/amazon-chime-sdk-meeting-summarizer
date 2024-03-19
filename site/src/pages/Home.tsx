@@ -1,15 +1,18 @@
 import React from 'react';
 
-import FilteredTable from '../components/filteredTable/FilteredTable';
+import PastMeetings from '../components/pastMeetings/PastMeetings';
 import MeetingHandler from '../components/meetingHandler/MeetingHandler';
+import ScheduledMeetings from '../components/scheduledMeetings/ScheduledMeetings';
 
 
 const Home: React.FC = () => {
     return (
         <>
             <MeetingHandler />
-            <div style={{ paddingTop: '20px' }}></div>
-            <FilteredTable />
+
+            <ScheduledMeetings />
+
+            <PastMeetings />
         </>
     );
 };

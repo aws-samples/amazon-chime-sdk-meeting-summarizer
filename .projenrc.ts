@@ -23,6 +23,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/client-transcribe',
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/client-bedrock-runtime',
+    '@aws-sdk/client-bedrock-agent-runtime',
     '@aws-sdk/client-s3',
     '@aws-sdk/client-scheduler',
     'esbuild',
@@ -30,7 +31,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     'aws-lambda',
     'dotenv',
     'moment',
-    "moment-timezone"
+    'moment-timezone',
 
   ],
   autoApproveOptions: {

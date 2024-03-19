@@ -39,6 +39,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.535.0",
     "@aws-sdk/client-bedrock-runtime": "^3.525.0",
     "@aws-sdk/client-chime-sdk-voice": "^3.525.0",
     "@aws-sdk/client-dynamodb": "^3.525.0",

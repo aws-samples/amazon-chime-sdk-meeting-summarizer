@@ -53,7 +53,19 @@ export class Infrastructure extends Construct {
           statements: [
             new PolicyStatement({
               resources: ['*'],
-              actions: ['bedrock:InvokeModel'],
+              actions: [
+                'bedrock:InvokeModel',
+                'bedrock:GetAgentKnowledgeBase',
+                'bedrock:GetFoundationModel',
+                'bedrock:GetFoundationModelAvailability',
+                'bedrock:GetKnowledgeBase',
+                'bedrock:InvokeAgent',
+                'bedrock:InvokeModel',
+                'bedrock:InvokeModelWithResponseStream',
+                'bedrock:ListAgentKnowledgeBases',
+                'bedrock:Retrieve',
+                'bedrock:RetrieveAndGenerate',
+              ],
             }),
           ],
         }),
@@ -75,7 +87,7 @@ export class Infrastructure extends Construct {
                 'scheduler:GetScheduleGroup',
                 'scheduler:ListScheduleGroups',
                 'scheduler:ListSchedules',
-                'iam:PassRole'
+                'iam:PassRole',
               ],
             }),
           ],
@@ -151,12 +163,18 @@ export class Infrastructure extends Construct {
 
     const createMeeting = api.root.addResource('createMeeting');
     const getMeetings = api.root.addResource('getMeetings');
+    const retrieveAndGenerate = api.root.addResource('retrieveAndGenerate');
+
 
     createMeeting.addMethod('POST', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
     getMeetings.addMethod('GET', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    retrieveAndGenerate.addMethod('POST', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });

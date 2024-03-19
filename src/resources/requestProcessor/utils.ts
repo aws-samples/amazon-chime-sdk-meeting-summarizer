@@ -1,9 +1,15 @@
 import {
+  BedrockAgentRuntimeClient,
+  RetrieveAndGenerateCommand,
+  RetrieveAndGenerateConfiguration,
+} from '@aws-sdk/client-bedrock-agent-runtime';
+import {
   BedrockRuntimeClient,
   InvokeModelCommand,
   InvokeModelCommandInput,
   InvokeModelCommandOutput,
 } from '@aws-sdk/client-bedrock-runtime';
+
 
 import {
   ChimeSDKVoiceClient,
@@ -13,7 +19,7 @@ import {
 import {
   DynamoDBClient,
   PutItemCommand,
-  ScanCommand
+  ScanCommand,
 } from '@aws-sdk/client-dynamodb';
 
 import {
@@ -35,11 +41,15 @@ const SMA_APP = process.env.SMA_APP || '';
 const EVENTBRIDGE_TARGET_LAMBDA = process.env.EVENTBRIDGE_TARGET_LAMBDA || '';
 const EVENTBRIDGE_GROUP_NAME = process.env.EVENTBRIDGE_GROUP_NAME || '';
 const EVENTBRIDGE_LAMBDA_ROLE = process.env.EVENTBRIDGE_LAMBDA_ROLE || '';
+const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID || '';
+const MODEL_ARN = process.env.MODEL_ARN || '';
 
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const schedulerClient = new SchedulerClient({ region: AWS_REGION });
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const chimeSdkClient = new ChimeSDKVoiceClient({ region: AWS_REGION });
+const bedrockRetrieveClient = new BedrockAgentRuntimeClient({ region: AWS_REGION });
+
 
 interface httpResponse {
   statusCode: number;
@@ -103,7 +113,7 @@ export const parseAndHandleCreateMeeting = async (
 };
 
 export const parseAndHandleGetMeetings = async (
-  meetingType: 'Past' | 'Scheduled'
+  meetingType: 'Past' | 'Scheduled',
 ): Promise<APIGatewayProxyResult> => {
   try {
     if (meetingType === 'Scheduled') {
@@ -136,6 +146,36 @@ export function createApiResponse(body: string, statusCode: number = 200): APIGa
   };
 }
 
+export const retrieveAndGenerate = async (
+  inputText: string,
+  // sessionId: string
+): Promise<APIGatewayProxyResult> => {
+  const retrieveAndGenerateConfig: RetrieveAndGenerateConfiguration = {
+    type: 'KNOWLEDGE_BASE',
+    knowledgeBaseConfiguration: {
+      knowledgeBaseId: 'KNOWLEDGE_BASE_ID',
+      modelArn: MODEL_ARN,
+    },
+  };
+
+  const input = {
+    // sessionId: sessionId,
+    input: {
+      text: inputText,
+    },
+    retrieveAndGenerateConfiguration: retrieveAndGenerateConfig,
+  };
+
+  try {
+    const command = new RetrieveAndGenerateCommand(input);
+    const response = await bedrockRetrieveClient.send(command);
+    return createApiResponse(JSON.stringify(response));
+  } catch (err) {
+    console.error('Error in retrieveAndGenerate:', err);
+    throw err;
+  }
+};
+
 // Private Functions after refactoring
 
 async function scanDynamoDBTable() {
@@ -157,13 +197,13 @@ async function scanDynamoDBTable() {
         meetingType: item.meeting_type.S,
         transcript: item.transcript.S,
         callId: item.call_id.S,
-        scheduledTime: item.scheduled_time.S
+        scheduledTime: item.scheduled_time.S,
       };
     });
 
     return transformedItems;
   } catch (err) {
-    console.error("Error scanning DynamoDB table:", err);
+    console.error('Error scanning DynamoDB table:', err);
     return createApiResponse(JSON.stringify('Internal Server Error'), 500);
   }
 }
@@ -193,8 +233,8 @@ async function writeDynamo({
 
 const listSchedulesInGroup = async () => {
   if (!EVENTBRIDGE_GROUP_NAME) {
-    console.error("EventBridge group name is not set.");
-    throw new Error("EventBridge group name is required.");
+    console.error('EventBridge group name is not set.');
+    throw new Error('EventBridge group name is required.');
   }
 
   try {
@@ -202,18 +242,21 @@ const listSchedulesInGroup = async () => {
     const response = await schedulerClient.send(command);
     return response.Schedules;
   } catch (err) {
-    console.error("Error listing schedules in EventBridge group:", err);
+    console.error('Error listing schedules in EventBridge group:', err);
     throw err;
   }
 };
 
 const getScheduleDetails = async (scheduleName: string) => {
   try {
-    const command = new GetScheduleCommand({ Name: scheduleName });
+    const command = new GetScheduleCommand({
+      Name: scheduleName,
+      GroupName: EVENTBRIDGE_GROUP_NAME,
+    });
     const response = await schedulerClient.send(command);
     return response;
   } catch (err) {
-    console.error("Error getting schedule details:", err);
+    console.error('Error getting schedule details:', err);
     throw err;
   }
 };
@@ -222,7 +265,7 @@ const getAllScheduleDetails = async () => {
   try {
     const schedulesResponse = await listSchedulesInGroup();
     if (!schedulesResponse || !Array.isArray(schedulesResponse)) {
-      console.error("No schedules found or schedulesResponse is undefined.");
+      console.error('No schedules found or schedulesResponse is undefined.');
       return [];
     }
 
@@ -233,16 +276,16 @@ const getAllScheduleDetails = async () => {
         const details = await getScheduleDetails(schedule.Name);
         detailedSchedules.push({
           ...schedule,
-          ScheduleExpression: details.ScheduleExpression
+          ScheduleExpression: details.ScheduleExpression,
         });
       } else {
-        console.error("Schedule name is undefined for a schedule:", schedule);
+        console.error('Schedule name is undefined for a schedule:', schedule);
       }
     }
 
     return detailedSchedules;
   } catch (err) {
-    console.error("Error retrieving all schedule details:", err);
+    console.error('Error retrieving all schedule details:', err);
     throw err;
   }
 };
