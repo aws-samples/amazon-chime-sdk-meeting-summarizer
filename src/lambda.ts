@@ -8,6 +8,7 @@ import {
   ServicePrincipal,
   Effect,
   PolicyStatement,
+  PolicyDocument,
 } from 'aws-cdk-lib/aws-iam';
 import { Function, Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -22,6 +23,9 @@ interface LambdaResourcesProps {
   eventbridge: CfnScheduleGroup;
   eventbridge_role: Role;
   dialOut: Function;
+  logLevel: string;
+  dataSourceId: string;
+  knowledgeBaseId: string;
 }
 export class LambdaResources extends Construct {
   public readonly botScheduler: Function;
@@ -29,6 +33,7 @@ export class LambdaResources extends Construct {
   public readonly createTranscript: Function;
   public readonly speakerDiarization: Function;
   public readonly callSummary: Function;
+  public readonly dataSyncLambda: Function;
 
   constructor(scope: Construct, id: string, props: LambdaResourcesProps) {
     super(scope, id);
@@ -102,6 +107,27 @@ export class LambdaResources extends Construct {
       resources: [
         `arn:aws:bedrock:${Stack.of(this).region
         }::foundation-model/anthropic.claude-v2`,
+      ],
+    });
+
+    const dataSyncLambdaRole = new Role(this, 'dataSyncLambdaRole', {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      inlinePolicies: {
+        ['bedrockPolicy']: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              resources: ['*'],
+              actions: [
+                'bedrock:StartIngestionJob',
+              ],
+            }),
+          ],
+        }),
+      },
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AWSLambdaBasicExecutionRole',
+        ),
       ],
     });
 
@@ -194,6 +220,29 @@ export class LambdaResources extends Construct {
         TABLE: props.callTable.tableName,
       },
     });
+
+    this.dataSyncLambda = new NodejsFunction(this, 'dataSyncLambda', {
+      entry: './src/resources/dataSync/index.ts',
+      runtime: Runtime.NODEJS_LATEST,
+      architecture: Architecture.ARM_64,
+      handler: 'handler',
+      timeout: Duration.minutes(5),
+      role: dataSyncLambdaRole,
+      environment: {
+        KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
+        DATA_SOURCE_ID: props.dataSourceId,
+        LOG_LEVEL: props.logLevel,
+      },
+    });
+
+    props.bucket.grantRead(this.dataSyncLambda);
+
+    props.bucket.addEventNotification(
+      EventType.OBJECT_CREATED,
+      new LambdaDestination(this.dataSyncLambda),
+      { prefix: 'knowledge-base' },
+      { suffix: '.txt' },
+    );
 
     props.bucket.addEventNotification(
       EventType.OBJECT_CREATED,

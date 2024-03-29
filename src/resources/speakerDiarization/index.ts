@@ -22,6 +22,7 @@ const AWS_REGION = process.env.AWS_REGION;
 const TABLE = process.env.TABLE;
 const BUCKET = process.env.BUCKET;
 const PREFIX = process.env.DIARIZED_TRANSCRIPT_PREFIX;
+const KNOWLEDGE_BASE_PREFIX = process.env.KNOWLEDGE_BASE_PREFIX;
 
 //import clients
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
@@ -65,7 +66,9 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
 
       const newTranscript = replaceSpeakerLabels(transcript, processedSpeakers);
 
-      await writeBucket(latestObjectKey, newTranscript);
+      await writeBucket(latestObjectKey, newTranscript, PREFIX || 'diarized-transcript');
+      await writeBucket(latestObjectKey, newTranscript, KNOWLEDGE_BASE_PREFIX || 'knowledge-base');
+
       await updateDynamo(latestObjectKey);
 
       console.log('Lambda function processed successfully.');
@@ -168,9 +171,10 @@ const replaceSpeakerLabels = (
 const writeBucket = async (
   latestObjectKey: string,
   newTranscript: string,
+  prefix: string,
 ): Promise<PutObjectCommandOutput | httpResponse> => {
   try {
-    const newKey = `${PREFIX}/${extractAfterFirstSlash(latestObjectKey)}`;
+    const newKey = `${prefix}/${extractAfterFirstSlash(latestObjectKey)}`;
     const command = new PutObjectCommand({
       Bucket: BUCKET,
       Key: newKey,
