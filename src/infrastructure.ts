@@ -127,7 +127,7 @@ export class Infrastructure extends Construct {
           TABLE: props.callTable.tableName,
           SMA_PHONE: props.phoneNumber.phoneNumber,
           SMA_APP: props.smaApp.sipMediaAppId,
-          KNOWLEDGE_BASE_ID: props.knowledgeBaseId
+          KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
         },
       },
     );

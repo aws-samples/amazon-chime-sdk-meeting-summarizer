@@ -45,7 +45,7 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
       'BedrockKnowledgeBaseResources',
       {
         bucket: s3Resources.processingBucket,
-        namePrefix: "chatbot-knowledge-base",
+        namePrefix: 'chatbot-knowledge-base',
       },
     );
 

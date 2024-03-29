@@ -171,7 +171,7 @@ const replaceSpeakerLabels = (
 const writeBucket = async (
   latestObjectKey: string,
   newTranscript: string,
-  prefix: string
+  prefix: string,
 ): Promise<PutObjectCommandOutput | httpResponse> => {
   try {
     const newKey = `${prefix}/${extractAfterFirstSlash(latestObjectKey)}`;

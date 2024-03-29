@@ -154,7 +154,7 @@ export const retrieveAndGenerate = async (
     knowledgeBaseConfiguration: {
       knowledgeBaseId: KNOWLEDGE_BASE_ID,
       modelArn: MODEL_ARN,
-    }, 
+    },
   };
 
   const input = {

@@ -4,20 +4,20 @@ import {
     GetParameterCommand,
     DeleteParameterCommand,
   } from '@aws-sdk/client-ssm';
-  
+
   const AWS_REGION = process.env.AWS_REGION;
   const ssmClient = new SSMClient({ region: AWS_REGION });
-  
+
   interface StoreParameterParams {
     name: string;
     value: string;
     description?: string;
   }
-  
+
   export const storeParameters = async (params: StoreParameterParams) => {
     const { name, value, description } = params;
     console.log(`Store Parameters - ${name}`);
-  
+
     try {
       await ssmClient.send(
         new PutParameterCommand({
@@ -35,17 +35,17 @@ import {
       throw new Error(`Failed to put parameter - ${name}`);
     }
   };
-  
+
   interface RetrieveParameterParams {
     name: string;
   }
-  
+
   export const retrieveParameters = async (
     params: RetrieveParameterParams,
   ): Promise<string> => {
     const { name } = params;
     console.log(`Store Parameters - ${name}`);
-  
+
     try {
       const getParameterResponse = await ssmClient.send(
         new GetParameterCommand({
@@ -64,7 +64,7 @@ import {
       throw new Error(`Failed to retrieve parameter - ${name}`);
     }
   };
-  
+
   interface DeleteParameterParams {
     name: string;
   }

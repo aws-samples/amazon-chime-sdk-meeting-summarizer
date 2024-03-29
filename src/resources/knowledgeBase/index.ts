@@ -3,7 +3,7 @@ import {
     CdkCustomResourceResponse,
     Context,
   } from 'aws-lambda';
-  
+
   import {
     createKnowledgeBase,
     createDataSource,
@@ -22,18 +22,18 @@ import {
     deleteCollection,
   } from './openSearchServerless';
   import { deleteParameter } from './utils';
-  
+
   let response: CdkCustomResourceResponse = {};
-  
+
   export const handler = async (
     event: CdkCustomResourceEvent,
     context: Context,
   ): Promise<CdkCustomResourceResponse> => {
     console.info('event: ', event);
-  
+
     const requestType = event.RequestType;
     const requestProperties = event.ResourceProperties;
-  
+
     switch (requestType) {
       case 'Create':
         console.log('Create');
@@ -76,7 +76,7 @@ import {
           nameSuffix: requestProperties.nameSuffix,
           namePrefix: requestProperties.namePrefix,
         });
-  
+
         response.Data = {
           collectionArn: collection.arn!,
           collectionId: collection.id!,
@@ -87,7 +87,7 @@ import {
         };
         response.Status = 'SUCCESS';
         response.Reason = 'CreateKnowledgeBase successful';
-  
+
         break;
       case 'Update':
         console.log('Update KnowledgeBase - NOOP');
@@ -155,17 +155,17 @@ import {
         await deleteParameter({
           name: `/${requestProperties.namePrefix}-${requestProperties.nameSuffix}/knowledgeBaseId`,
         });
-  
+
         response.Status = 'SUCCESS';
         response.Reason = 'DeleteKnowledgeBase successful';
         break;
     }
-  
+
     response.StackId = event.StackId;
     response.RequestId = event.RequestId;
     response.LogicalResourceId = event.LogicalResourceId;
     response.PhysicalResourceId = context.logGroupName;
-  
+
     console.log(`Response: ${JSON.stringify(response)}`);
     return response;
   };
