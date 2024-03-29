@@ -42,7 +42,7 @@ const EVENTBRIDGE_TARGET_LAMBDA = process.env.EVENTBRIDGE_TARGET_LAMBDA || '';
 const EVENTBRIDGE_GROUP_NAME = process.env.EVENTBRIDGE_GROUP_NAME || '';
 const EVENTBRIDGE_LAMBDA_ROLE = process.env.EVENTBRIDGE_LAMBDA_ROLE || '';
 const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID || '';
-const MODEL_ARN = process.env.MODEL_ARN || '';
+const MODEL_ARN = process.env.MODEL_ARN || 'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2';
 
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const schedulerClient = new SchedulerClient({ region: AWS_REGION });
@@ -148,18 +148,16 @@ export function createApiResponse(body: string, statusCode: number = 200): APIGa
 
 export const retrieveAndGenerate = async (
   inputText: string,
-  // sessionId: string
 ): Promise<APIGatewayProxyResult> => {
   const retrieveAndGenerateConfig: RetrieveAndGenerateConfiguration = {
     type: 'KNOWLEDGE_BASE',
     knowledgeBaseConfiguration: {
-      knowledgeBaseId: 'KNOWLEDGE_BASE_ID',
+      knowledgeBaseId: KNOWLEDGE_BASE_ID,
       modelArn: MODEL_ARN,
-    },
+    }, 
   };
 
   const input = {
-    // sessionId: sessionId,
     input: {
       text: inputText,
     },

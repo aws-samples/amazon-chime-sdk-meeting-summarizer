@@ -42,6 +42,7 @@ export class S3Resources extends Construct {
           '',
         ),
         Source.data('transcribe-output/TRANSCRIBE_OUTPUT_FILES', ''),
+        Source.data('knowledge-base/KNOWLEDGE_BASE_FILES', ''),
       ],
       destinationBucket: this.processingBucket,
     });

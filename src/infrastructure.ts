@@ -33,11 +33,13 @@ interface InfrastructureProps {
   smaApp: ChimeSipMediaApp;
   phoneNumber: ChimePhoneNumber;
   dialOut: Function;
+  knowledgeBaseId: string;
 }
 
 export class Infrastructure extends Construct {
   public apiUrl: string;
   public requestProcessorLambda: Function;
+
 
   constructor(scope: Construct, id: string, props: InfrastructureProps) {
     super(scope, id);
@@ -125,6 +127,7 @@ export class Infrastructure extends Construct {
           TABLE: props.callTable.tableName,
           SMA_PHONE: props.phoneNumber.phoneNumber,
           SMA_APP: props.smaApp.sipMediaAppId,
+          KNOWLEDGE_BASE_ID: props.knowledgeBaseId
         },
       },
     );
