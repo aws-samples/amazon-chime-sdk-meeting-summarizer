@@ -105,7 +105,7 @@ export const createDataSource = async (params: CreateDataSourceProps) => {
           type: 'S3',
           s3Configuration: {
             bucketArn: bucketArn,
-            inclusionPrefixes: ['knowledgeBase'],
+            inclusionPrefixes: ['knowledge-base'],
           },
         },
       }),
