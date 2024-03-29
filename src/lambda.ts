@@ -118,7 +118,7 @@ export class LambdaResources extends Construct {
             new PolicyStatement({
               resources: ['*'],
               actions: [
-                'bedrock:StartIngestionJob'
+                'bedrock:StartIngestionJob',
               ],
             }),
           ],
