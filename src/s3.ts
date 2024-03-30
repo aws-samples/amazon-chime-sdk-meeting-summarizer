@@ -1,6 +1,6 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { Effect, PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
+import { Bucket, BucketEncryption, HttpMethods } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
@@ -16,6 +16,15 @@ export class S3Resources extends Construct {
       autoDeleteObjects: true,
       encryption: BucketEncryption.S3_MANAGED,
       eventBridgeEnabled: true,
+      cors: [
+        {
+          allowedHeaders: ['*'],
+          allowedMethods: [HttpMethods.GET],
+          allowedOrigins: ['*'],
+          exposedHeaders: [],
+          maxAge: 3000
+        }
+      ],
     });
 
     const processingBucketPolicy = new PolicyStatement({
