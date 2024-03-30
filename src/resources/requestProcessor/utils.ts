@@ -22,6 +22,7 @@ import {
   ScanCommand,
 } from '@aws-sdk/client-dynamodb';
 
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import {
   SchedulerClient,
   CreateScheduleCommand,
@@ -30,9 +31,11 @@ import {
   GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
 
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 import moment from 'moment-timezone';
+
 
 const AWS_REGION = process.env.AWS_REGION;
 const TABLE_NAME = process.env.TABLE || '';
@@ -49,7 +52,7 @@ const schedulerClient = new SchedulerClient({ region: AWS_REGION });
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const chimeSdkClient = new ChimeSDKVoiceClient({ region: AWS_REGION });
 const bedrockRetrieveClient = new BedrockAgentRuntimeClient({ region: AWS_REGION });
-
+const s3Client = new S3Client({ region: AWS_REGION });
 
 interface httpResponse {
   statusCode: number;
@@ -174,7 +177,33 @@ export const retrieveAndGenerate = async (
   }
 };
 
+export async function handleDownloadRequest(bucketName: string, fileKey: string) {
+  try {
+    const downloadUrl = await getS3DownloadUrl(bucketName, fileKey);
+    return createApiResponse(JSON.stringify({ url: downloadUrl }), 200);
+  } catch (error) {
+    console.error('Error in handleDownloadRequest:', error);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+}
+
 // Private Functions after refactoring
+
+async function getS3DownloadUrl(bucketName: string, fileKey: string) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: fileKey,
+    });
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+    return url;
+  } catch (error) {
+    console.error('Error generating S3 presigned URL: ', error);
+    throw error;
+  }
+}
 
 async function scanDynamoDBTable() {
   const params = {

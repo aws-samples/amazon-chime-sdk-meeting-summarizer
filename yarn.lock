@@ -624,17 +624,17 @@
     tslib "^2.6.2"
     uuid "^9.0.1"
 
-"@aws-sdk/client-s3@^3.525.0":
-  version "3.536.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.536.0.tgz#15cf90a15e68229652227fbacfc90a8c2dc05f42"
-  integrity sha512-UM5txJxq8qKzLDVuW9c904bpb7+u1jOeyJITLz79WpyHSOP6ERHoTx/ltEuGJ4zQVazfkgthqR0lIn09sXEEuw==
+"@aws-sdk/client-s3@^3.540.0":
+  version "3.540.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/client-s3/-/client-s3-3.540.0.tgz#ab9f0e488009c79f676d7b3489b9de0ec6a1cde3"
+  integrity sha512-rYBuNB7uqCO9xZc0OAwM2K6QJAo2Syt1L5OhEaf7zG7FulNMyrK6kJPg1WrvNE90tW6gUdDaTy3XsQ7lq6O7uA==
   dependencies:
     "@aws-crypto/sha1-browser" "3.0.0"
     "@aws-crypto/sha256-browser" "3.0.0"
     "@aws-crypto/sha256-js" "3.0.0"
-    "@aws-sdk/client-sts" "3.535.0"
+    "@aws-sdk/client-sts" "3.540.0"
     "@aws-sdk/core" "3.535.0"
-    "@aws-sdk/credential-provider-node" "3.535.0"
+    "@aws-sdk/credential-provider-node" "3.540.0"
     "@aws-sdk/middleware-bucket-endpoint" "3.535.0"
     "@aws-sdk/middleware-expect-continue" "3.535.0"
     "@aws-sdk/middleware-flexible-checksums" "3.535.0"
@@ -644,12 +644,12 @@
     "@aws-sdk/middleware-recursion-detection" "3.535.0"
     "@aws-sdk/middleware-sdk-s3" "3.535.0"
     "@aws-sdk/middleware-signing" "3.535.0"
-    "@aws-sdk/middleware-ssec" "3.535.0"
-    "@aws-sdk/middleware-user-agent" "3.535.0"
+    "@aws-sdk/middleware-ssec" "3.537.0"
+    "@aws-sdk/middleware-user-agent" "3.540.0"
     "@aws-sdk/region-config-resolver" "3.535.0"
     "@aws-sdk/signature-v4-multi-region" "3.535.0"
     "@aws-sdk/types" "3.535.0"
-    "@aws-sdk/util-endpoints" "3.535.0"
+    "@aws-sdk/util-endpoints" "3.540.0"
     "@aws-sdk/util-user-agent-browser" "3.535.0"
     "@aws-sdk/util-user-agent-node" "3.535.0"
     "@aws-sdk/xml-builder" "3.535.0"
@@ -1432,10 +1432,10 @@
     "@smithy/util-middleware" "^2.2.0"
     tslib "^2.6.2"
 
-"@aws-sdk/middleware-ssec@3.535.0":
-  version "3.535.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/middleware-ssec/-/middleware-ssec-3.535.0.tgz#d4f537d64651f330eada73a7890ff9975760ad0a"
-  integrity sha512-QAQ++9my7VZzusUPOFcUMdhTnjpGRyy/OvPC+jg9usdfcaSZeQbfzbdaVBalcm2Wt+1qxh3LZSTS+LxKikm02Q==
+"@aws-sdk/middleware-ssec@3.537.0":
+  version "3.537.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/middleware-ssec/-/middleware-ssec-3.537.0.tgz#c64e4234e38f285e9e2bdf06fdbbb57f6bc848b2"
+  integrity sha512-2QWMrbwd5eBy5KCYn9a15JEWBgrK2qFEKQN2lqb/6z0bhtevIOxIRfC99tzvRuPt6nixFQ+ynKuBjcfT4ZFrdQ==
   dependencies:
     "@aws-sdk/types" "3.535.0"
     "@smithy/types" "^2.12.0"
@@ -1473,6 +1473,20 @@
     "@smithy/types" "^2.12.0"
     "@smithy/util-config-provider" "^2.3.0"
     "@smithy/util-middleware" "^2.2.0"
+    tslib "^2.6.2"
+
+"@aws-sdk/s3-request-presigner@^3.540.0":
+  version "3.540.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/s3-request-presigner/-/s3-request-presigner-3.540.0.tgz#fb4bfd9751bdd6eaf46ab921c20540fe907ea2f0"
+  integrity sha512-alm+PiQOzAIfNrabxOG/Fk9uimQq8VCdqmhRvZRG7iDwtl4yrW+ZinoDssWFUgeZgPZQTymLcslC2hvMKHgY9g==
+  dependencies:
+    "@aws-sdk/signature-v4-multi-region" "3.535.0"
+    "@aws-sdk/types" "3.535.0"
+    "@aws-sdk/util-format-url" "3.535.0"
+    "@smithy/middleware-endpoint" "^2.5.0"
+    "@smithy/protocol-http" "^3.3.0"
+    "@smithy/smithy-client" "^2.5.0"
+    "@smithy/types" "^2.12.0"
     tslib "^2.6.2"
 
 "@aws-sdk/signature-v4-multi-region@3.535.0":
@@ -1544,6 +1558,16 @@
     "@aws-sdk/types" "3.535.0"
     "@smithy/types" "^2.12.0"
     "@smithy/util-endpoints" "^1.2.0"
+    tslib "^2.6.2"
+
+"@aws-sdk/util-format-url@3.535.0":
+  version "3.535.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/util-format-url/-/util-format-url-3.535.0.tgz#b453e603ebe4c1c92e5a0bae24b6fa202ca1d38e"
+  integrity sha512-ElbNkm0bddu53CuW44Iuux1ZbTV50fydbSh/4ypW3LrmUvHx193ogj0HXQ7X26kmmo9rXcsrLdM92yIeTjidVg==
+  dependencies:
+    "@aws-sdk/types" "3.535.0"
+    "@smithy/querystring-builder" "^2.2.0"
+    "@smithy/types" "^2.12.0"
     tslib "^2.6.2"
 
 "@aws-sdk/util-locate-window@^3.0.0":

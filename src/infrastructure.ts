@@ -167,7 +167,7 @@ export class Infrastructure extends Construct {
     const createMeeting = api.root.addResource('createMeeting');
     const getMeetings = api.root.addResource('getMeetings');
     const retrieveAndGenerate = api.root.addResource('retrieveAndGenerate');
-
+    const downloadFile = api.root.addResource('downloadFile');
 
     createMeeting.addMethod('POST', requestIntegration, {
       authorizer: auth,
@@ -178,6 +178,10 @@ export class Infrastructure extends Construct {
       authorizationType: AuthorizationType.COGNITO,
     });
     retrieveAndGenerate.addMethod('POST', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    downloadFile.addMethod('POST', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
