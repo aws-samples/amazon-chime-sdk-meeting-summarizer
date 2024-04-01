@@ -72,6 +72,7 @@ export class LambdaResources extends Construct {
       resources: ['*'],
     });
 
+
     transcribeRole.addToPolicy(transcribePolicy);
 
     const createTranscriptRole = new Role(this, 'createTranscriptRole', {
@@ -143,6 +144,7 @@ export class LambdaResources extends Construct {
 
     props.callTable.grantWriteData(botSchedulerRole);
     props.callTable.grantWriteData(speakerDiarizationRole);
+    props.callTable.grantWriteData(transcribeRole)
     props.callTable.grantWriteData(callSummaryRole);
 
     this.botScheduler = new NodejsFunction(this, 'botSchedulerLambda', {
@@ -172,6 +174,7 @@ export class LambdaResources extends Construct {
         BUCKET: props.bucket.bucketName,
         PREFIX_TRANSCRIBE_S3: 'transcribe-output',
         PREFIX_MEETING_MP3: 'meeting-mp3',
+        TABLE: props.callTable.tableName
       },
     });
 
