@@ -18,6 +18,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   deps: [
     'fs-extra',
     '@types/fs-extra',
+    '@types/aws-lambda',
     'cdk-amazon-chime-resources',
     '@aws-sdk/client-chime-sdk-voice',
     '@aws-sdk/client-transcribe',
@@ -26,18 +27,17 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/client-bedrock-agent-runtime',
     '@aws-sdk/client-s3',
     '@aws-sdk/client-scheduler',
-    '@opensearch-project/opensearch',
+    '@aws-sdk/s3-request-presigner',
     '@aws-sdk/client-bedrock-agent',
     '@aws-sdk/client-opensearchserverless',
     '@aws-sdk/credential-provider-node',
     '@aws-sdk/client-ssm',
+    '@opensearch-project/opensearch',
     'esbuild',
-    '@types/aws-lambda',
     'aws-lambda',
     'dotenv',
     'moment',
     'moment-timezone',
-
   ],
   autoApproveOptions: {
     secret: 'GITHUB_TOKEN',

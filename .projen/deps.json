@@ -94,6 +94,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/s3-request-presigner",
+      "type": "runtime"
+    },
+    {
       "name": "@opensearch-project/opensearch",
       "type": "runtime"
     },

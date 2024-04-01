@@ -5,6 +5,8 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './MainLayout';
 import Home from './pages/Home';
+import Reader from './pages/Reader';
+import { FileReaderProvider } from './AuthContext';
 
 Amplify.configure(AmplifyConfig);
 
@@ -12,11 +14,14 @@ const App: React.FC = () => {
     return (
         <Authenticator>
             <Router>
-                <MainLayout>
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                    </Routes>
-                </MainLayout>
+                <FileReaderProvider>
+                    <MainLayout>
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/reader/:type/:id" element={<Reader />} />
+                        </Routes>
+                    </MainLayout>
+                </FileReaderProvider>
             </Router>
         </Authenticator>
     );
