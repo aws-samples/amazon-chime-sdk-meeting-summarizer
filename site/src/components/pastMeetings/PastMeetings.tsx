@@ -161,16 +161,26 @@ function PastMeetings() {
 
                     useEffect(() => {
                         async function fetchAudioUrl() {
-                            if (item.audio) {
-                                const bucketName = extractBucketName(item.audio);
-                                const fileKey = extractFileName(item.audio);
-                                console.log("file key:", fileKey)
-                                if (bucketName && fileKey) {
-                                    const url = await getDownloadUrl(bucketName, fileKey);
-                                    if (url) {
-                                        console.log("Audio URL:", url);
-                                        setAudioUrl(url);
-                                    }
+
+                            const audioFileUrl = item.audio;
+                            if (!audioFileUrl) {
+                                console.error('File URL is undefined');
+                                return;
+                            }
+
+                            const bucketName = extractBucketName(audioFileUrl);
+                            if (!bucketName) {
+                                console.error('Failed to extract bucket name');
+                                return;
+                            }
+
+                            const urlParts = audioFileUrl.split(`.s3.amazonaws.com/`);
+                            const fileKey = urlParts.length > 1 ? urlParts[1] : undefined;
+
+                            if (bucketName && fileKey) {
+                                const url = await getDownloadUrl(bucketName, fileKey);
+                                if (url) {
+                                    setAudioUrl(url);
                                 }
                             }
                         }
@@ -193,7 +203,6 @@ function PastMeetings() {
                 return <AudioPlayer />;
             }
         },
-
         {
             id: 'summary',
             header: 'Summary',
