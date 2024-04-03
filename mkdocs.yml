@@ -88,3 +88,4 @@ nav:
   - Usage:
       - Examples:
           - Scheduling: usage/scheduling-calls.md
+  - API Reference: "api"
