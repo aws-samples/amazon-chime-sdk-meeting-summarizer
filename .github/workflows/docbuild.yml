@@ -18,5 +18,5 @@ jobs:
           python-version: 3.x
       - run: pip install mkdocs-material
       - run: npm install
-      - run: npx typedoc --out docs/api lib/index.ts
+      - run: npx typedoc --out docs/api src/index.ts
       - run: mkdocs gh-deploy --force
