@@ -3,6 +3,7 @@ site_description: Gen AI for Call Scheduling, Speaker Diarization, and Summariza
 copyright: Made with ❤️ by Amazon Chime Meeting Summarizer contributors.
 repo_name: aws-samples/amazon-chime-sdk-meeting-summarizer
 repo_url: https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer
+docs_dir: "docs"
 
 # Configuration
 theme:
