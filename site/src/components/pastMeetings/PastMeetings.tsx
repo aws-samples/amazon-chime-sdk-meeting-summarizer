@@ -14,6 +14,7 @@ interface ApiResponseItem {
     meetingType: string;
     summary: string;
     transcript: string;
+    audio: string,
 }
 
 interface ApiResponse {
@@ -151,6 +152,48 @@ function PastMeetings() {
             header: 'Meeting Type',
             cell: (item: ApiResponseItem) => item.meetingType
         },
+        {
+            id: 'audio',
+            header: 'Audio',
+            cell: (item: ApiResponseItem) => {
+                const AudioPlayer = () => {
+                    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+                    useEffect(() => {
+                        async function fetchAudioUrl() {
+                            if (item.audio) {
+                                const bucketName = extractBucketName(item.audio);
+                                const fileKey = extractFileName(item.audio);
+                                console.log("file key:", fileKey)
+                                if (bucketName && fileKey) {
+                                    const url = await getDownloadUrl(bucketName, fileKey);
+                                    if (url) {
+                                        console.log("Audio URL:", url);
+                                        setAudioUrl(url);
+                                    }
+                                }
+                            }
+                        }
+
+                        fetchAudioUrl();
+                    }, []);
+
+                    if (!audioUrl) {
+                        return <span>Loading audio...</span>;
+                    }
+
+                    return (
+                        <audio controls>
+                            <source src={audioUrl} type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    );
+                };
+
+                return <AudioPlayer />;
+            }
+        },
+
         {
             id: 'summary',
             header: 'Summary',
@@ -333,11 +376,18 @@ function PastMeetings() {
             propertyLabel: 'Scheduled Time'
         },
         {
-            key: 'meetingType',
-            label: 'Meeting Type',
+            key: 'audio',
+            label: 'Audio',
             dataType: 'string',
-            groupValuesLabel: 'Meeting Type Values',
-            propertyLabel: 'Meeting Type'
+            groupValuesLabel: 'Audio Values',
+            propertyLabel: 'Audio'
+        },
+        {
+            key: 'summary',
+            label: 'Summary',
+            dataType: 'string',
+            groupValuesLabel: 'Summary Values',
+            propertyLabel: 'Summary'
         },
         {
             key: 'summary',
@@ -384,7 +434,8 @@ function PastMeetings() {
                     if (Array.isArray(responseBody) && responseBody.every(item => {
                         return typeof item === 'object' && item !== null &&
                             'callId' in item && 'scheduledTime' in item &&
-                            'meetingType' in item && 'summary' in item && 'transcript' in item;
+                            'meetingType' in item && 'summary' in item && 'transcript' in item
+                            && 'audio' in item;
                     })) {
                         setApiResponse(responseBody as unknown as ApiResponseItem[]);
                     } else {

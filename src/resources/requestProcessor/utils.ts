@@ -225,6 +225,7 @@ async function scanDynamoDBTable() {
         transcript: item.transcript.S,
         callId: item.call_id.S,
         scheduledTime: item.scheduled_time.S,
+        audio: item.meeting_audio.S,
       };
     });
 
@@ -251,7 +252,7 @@ async function writeDynamo({
         call_id: { S: meetingID },
         scheduled_time: { S: scheduledTime.toString() },
         meeting_type: { S: meetingType },
-        meeting_audio : {S: 'Available After Meeting'},
+        meeting_audio: { S: 'Available After Meeting' },
         transcript: { S: 'Available After Meeting' },
         summary: { S: 'Available After The Meeting' },
       },
