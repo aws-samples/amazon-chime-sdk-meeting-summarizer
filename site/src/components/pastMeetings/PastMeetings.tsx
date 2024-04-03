@@ -136,12 +136,12 @@ function PastMeetings() {
     const columnDefinitions = [
         {
             id: 'callId',
-            header: 'Call ID',
+            header: 'Meeting ID',
             cell: (item: ApiResponseItem) => item.callId
         },
         {
             id: 'scheduledTime',
-            header: 'Scheduled Time',
+            header: 'Meeting Time',
             cell: (item: ApiResponseItem) => {
                 const date = new Date(Number(item.scheduledTime));
                 return format(date, 'PPpp');
@@ -154,7 +154,7 @@ function PastMeetings() {
         },
         {
             id: 'audio',
-            header: 'Audio',
+            header: 'Meeting Audio',
             cell: (item: ApiResponseItem) => {
                 const AudioPlayer = () => {
                     const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -205,7 +205,7 @@ function PastMeetings() {
         },
         {
             id: 'summary',
-            header: 'Summary',
+            header: 'Meeting Summary',
             cell: (item: ApiResponseItem) => {
                 return (
                     <div>
@@ -287,7 +287,7 @@ function PastMeetings() {
         },
         {
             id: 'transcript',
-            header: 'Transcript',
+            header: 'Meeting Transcript',
             cell: (item: ApiResponseItem) => {
                 return (
                     <div>
