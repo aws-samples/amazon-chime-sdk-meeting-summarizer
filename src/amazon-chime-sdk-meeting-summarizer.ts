@@ -84,10 +84,11 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
       identityPool: cognitoResources.identityPool,
     });
 
+ 
+
     new CloudWatchResources(this, 'cloudwatchResources', {
       smaHandler: chimeResources.smaHandler,
       dialOut: chimeResources.dialOut,
-      botScheduler: lambdaResources.botScheduler,
       createTranscript: lambdaResources.createTranscript,
       speakerDiarization: lambdaResources.speakerDiarization,
       callSummary: lambdaResources.callSummary,

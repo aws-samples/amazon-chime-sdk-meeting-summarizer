@@ -43,7 +43,6 @@ export class S3Resources extends Construct {
     new BucketDeployment(this, 'uploadBucketDeployment', {
       sources: [
         Source.data('call-summary/CALL_SUMMARY_FILES', ''),
-        Source.data('meeting-invite/MEETING_INVITE_FILES', ''),
         Source.data('diarized-transcript/DIARIZED_TRANSCRIPT_FILES', ''),
         Source.data('meeting-mp3/MEETING_MP3_FILES', ''),
         Source.data(
