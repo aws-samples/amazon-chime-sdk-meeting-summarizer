@@ -243,7 +243,6 @@ function PastMeetings() {
         {
             id: 'title',
             header: 'Meeting Title',
-            minWidth: 176,
             cell: (item: ApiResponseItem) => item.title,
             isRowHeader: true,
             editConfig: {
@@ -272,7 +271,9 @@ function PastMeetings() {
         {
             id: 'audio',
             header: 'Meeting Audio',
-            cell: (item: ApiResponseItem) => <AudioPlayer audioFileUrl={item.audio} />
+            cell: (item: ApiResponseItem) =>
+                <AudioPlayer audioFileUrl={item.audio}
+                />
         },
         {
             id: 'summary',
@@ -478,13 +479,6 @@ function PastMeetings() {
             propertyLabel: 'Summary'
         },
         {
-            key: 'summary',
-            label: 'Summary',
-            dataType: 'string',
-            groupValuesLabel: 'Summary Values',
-            propertyLabel: 'Summary'
-        },
-        {
             key: 'transcript',
             label: 'Transcript',
             dataType: 'string',
@@ -574,8 +568,6 @@ function PastMeetings() {
                             }}
                             loading={isLoading}
                             stripedRows
-                            enableKeyboardNavigation
-                            stickyHeader
                             submitEdit={async (item: ApiResponseItem) => {
                                 await updateMeetingTitle(item.callId, item.scheduledTime, updatedTitle);
                                 setApiResponse(prevData => {
