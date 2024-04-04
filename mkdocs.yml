@@ -90,4 +90,3 @@ nav:
           - Scheduling: usage/scheduling-meetings.md
           - Management: usage/meeting-management.md
   - API Reference: "api"
-  - Frontend Reference: "front"

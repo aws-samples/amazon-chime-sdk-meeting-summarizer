@@ -27,9 +27,5 @@ jobs:
       - run: npm install
       - run: npx typedoc --out docs/api src/index.ts
       
-      # ReactJS API reference
-      - run: cd site && npm install
-      - run: npx typedoc --tsconfig site/tsconfig.json --out docs/front site/src/index.tsx
-      
       # docs  deploy
       - run: mkdocs gh-deploy --force
