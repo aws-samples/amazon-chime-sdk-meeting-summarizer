@@ -13,6 +13,6 @@ This docs provides an overview of the Chime Summarizer, a CDK application deploy
     The deployment will create in the account:
 
     - the ReactJS frontend integrated with Amazon Cognito
-    - the Lambda functions to handle all the integrations
-    - the DynamoDB to store all the calls metadata
-    - the API Gateway to handle all the frontend calls
+    - the Lambda functions to handle all the AWS Bedrock integrations
+    - the DynamoDB to store all the meetings metadata
+    - the API Gateway to handle all the frontend requests
