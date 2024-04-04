@@ -25,6 +25,12 @@ Execute the following command in your terminal to deploy the project:
 yarn launch
 ```
 
+Example output:
+
+```
+test
+```
+
 ### Clean-up Process
 
 To remove the deployed resources and clean up your environment, use:

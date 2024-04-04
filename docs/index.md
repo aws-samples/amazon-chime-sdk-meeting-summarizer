@@ -16,9 +16,3 @@ This docs provides an overview of the Chime Summarizer, a CDK application deploy
     - the Lambda functions to handle all the integrations
     - the DynamoDB to store all the calls metadata
     - the API Gateway to handle all the frontend calls
-
-Example output:
-
-```
-test
-```
