@@ -222,13 +222,13 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=esbuild,eslint-import-resolver-typescript,eslint-plugin-import,projen,ts-node,typescript,@aws-sdk/client-bedrock-agent-runtime,@aws-sdk/client-bedrock-runtime,@aws-sdk/client-chime-sdk-voice,@aws-sdk/client-dynamodb,@aws-sdk/client-s3,@aws-sdk/client-scheduler,@aws-sdk/client-transcribe,@types/aws-lambda,@types/fs-extra,aws-lambda,cdk-amazon-chime-resources,dotenv,fs-extra,moment,moment-timezone"
+          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=esbuild,eslint-import-resolver-typescript,eslint-plugin-import,projen,ts-node,typescript,@aws-sdk/client-bedrock-agent,@aws-sdk/client-bedrock-agent-runtime,@aws-sdk/client-bedrock-runtime,@aws-sdk/client-chime-sdk-voice,@aws-sdk/client-dynamodb,@aws-sdk/client-opensearchserverless,@aws-sdk/client-s3,@aws-sdk/client-scheduler,@aws-sdk/client-ssm,@aws-sdk/client-transcribe,@aws-sdk/credential-provider-node,@aws-sdk/s3-request-presigner,@opensearch-project/opensearch,@types/aws-lambda,@types/fs-extra,aws-lambda,cdk-amazon-chime-resources,dotenv,fs-extra,moment,moment-timezone"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk esbuild eslint-import-resolver-typescript eslint-plugin-import eslint projen ts-node typescript @aws-sdk/client-bedrock-agent-runtime @aws-sdk/client-bedrock-runtime @aws-sdk/client-chime-sdk-voice @aws-sdk/client-dynamodb @aws-sdk/client-s3 @aws-sdk/client-scheduler @aws-sdk/client-transcribe @types/aws-lambda @types/fs-extra aws-cdk-lib aws-lambda cdk-amazon-chime-resources constructs dotenv fs-extra moment moment-timezone"
+          "exec": "yarn upgrade @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk esbuild eslint-import-resolver-typescript eslint-plugin-import eslint projen ts-node typescript @aws-sdk/client-bedrock-agent @aws-sdk/client-bedrock-agent-runtime @aws-sdk/client-bedrock-runtime @aws-sdk/client-chime-sdk-voice @aws-sdk/client-dynamodb @aws-sdk/client-opensearchserverless @aws-sdk/client-s3 @aws-sdk/client-scheduler @aws-sdk/client-ssm @aws-sdk/client-transcribe @aws-sdk/credential-provider-node @aws-sdk/s3-request-presigner @opensearch-project/opensearch @types/aws-lambda @types/fs-extra aws-cdk-lib aws-lambda cdk-amazon-chime-resources constructs dotenv fs-extra moment moment-timezone"
         },
         {
           "exec": "npx projen"

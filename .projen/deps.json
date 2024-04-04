@@ -50,6 +50,10 @@
       "type": "build"
     },
     {
+      "name": "@aws-sdk/client-bedrock-agent",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/client-bedrock-agent-runtime",
       "type": "runtime"
     },
@@ -66,6 +70,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-opensearchserverless",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/client-s3",
       "type": "runtime"
     },
@@ -74,7 +82,23 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-ssm",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/client-transcribe",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/credential-provider-node",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/s3-request-presigner",
+      "type": "runtime"
+    },
+    {
+      "name": "@opensearch-project/opensearch",
       "type": "runtime"
     },
     {

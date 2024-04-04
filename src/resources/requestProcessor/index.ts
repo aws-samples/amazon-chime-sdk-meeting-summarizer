@@ -2,6 +2,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import {
   createApiResponse,
+  handleDownloadRequest,
   methodNotAllowedResponse,
   parseAndHandleCreateMeeting,
   parseAndHandleGetMeetings,
@@ -45,6 +46,23 @@ export const lambdaHandler = async (
       }
       return methodNotAllowedResponse();
 
+    case '/downloadFile':
+      if (event.httpMethod === 'POST') {
+        if (event.body) {
+          const body = JSON.parse(event.body);
+          const fileKey = body.fileKey;
+          const bucketName = body.bucketName;
+
+          if (bucketName && fileKey) {
+            return handleDownloadRequest(bucketName, fileKey);
+          } else {
+            return createApiResponse(JSON.stringify('Missing fileKey'), 400);
+          }
+        } else {
+          return createApiResponse(JSON.stringify('No request body found'), 400);
+        }
+      }
+      return methodNotAllowedResponse();
 
     default:
       return createApiResponse(JSON.stringify('Not Found'), 404);

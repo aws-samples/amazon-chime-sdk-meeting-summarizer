@@ -1,6 +1,6 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { Effect, PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
+import { Bucket, BucketEncryption, HttpMethods } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
@@ -16,6 +16,15 @@ export class S3Resources extends Construct {
       autoDeleteObjects: true,
       encryption: BucketEncryption.S3_MANAGED,
       eventBridgeEnabled: true,
+      cors: [
+        {
+          allowedHeaders: ['*'],
+          allowedMethods: [HttpMethods.GET],
+          allowedOrigins: ['*'],
+          exposedHeaders: [],
+          maxAge: 3000,
+        },
+      ],
     });
 
     const processingBucketPolicy = new PolicyStatement({
@@ -34,7 +43,6 @@ export class S3Resources extends Construct {
     new BucketDeployment(this, 'uploadBucketDeployment', {
       sources: [
         Source.data('call-summary/CALL_SUMMARY_FILES', ''),
-        Source.data('meeting-invite/MEETING_INVITE_FILES', ''),
         Source.data('diarized-transcript/DIARIZED_TRANSCRIPT_FILES', ''),
         Source.data('meeting-mp3/MEETING_MP3_FILES', ''),
         Source.data(
@@ -42,6 +50,7 @@ export class S3Resources extends Construct {
           '',
         ),
         Source.data('transcribe-output/TRANSCRIBE_OUTPUT_FILES', ''),
+        Source.data('knowledge-base/KNOWLEDGE_BASE_FILES', ''),
       ],
       destinationBucket: this.processingBucket,
     });

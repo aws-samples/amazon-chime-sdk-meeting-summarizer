@@ -22,6 +22,7 @@ import {
   ScanCommand,
 } from '@aws-sdk/client-dynamodb';
 
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import {
   SchedulerClient,
   CreateScheduleCommand,
@@ -30,9 +31,11 @@ import {
   GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
 
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 import moment from 'moment-timezone';
+
 
 const AWS_REGION = process.env.AWS_REGION;
 const TABLE_NAME = process.env.TABLE || '';
@@ -42,14 +45,14 @@ const EVENTBRIDGE_TARGET_LAMBDA = process.env.EVENTBRIDGE_TARGET_LAMBDA || '';
 const EVENTBRIDGE_GROUP_NAME = process.env.EVENTBRIDGE_GROUP_NAME || '';
 const EVENTBRIDGE_LAMBDA_ROLE = process.env.EVENTBRIDGE_LAMBDA_ROLE || '';
 const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID || '';
-const MODEL_ARN = process.env.MODEL_ARN || '';
+const MODEL_ARN = process.env.MODEL_ARN || 'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2';
 
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const schedulerClient = new SchedulerClient({ region: AWS_REGION });
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const chimeSdkClient = new ChimeSDKVoiceClient({ region: AWS_REGION });
 const bedrockRetrieveClient = new BedrockAgentRuntimeClient({ region: AWS_REGION });
-
+const s3Client = new S3Client({ region: AWS_REGION });
 
 interface httpResponse {
   statusCode: number;
@@ -69,9 +72,9 @@ export const parseAndHandleCreateMeeting = async (
     const bedrockResponse = JSON.parse(
       new TextDecoder().decode((await invokeModel(input)).body),
     );
-    let { meetingId, meetingType, dialIn } = JSON.parse(bedrockResponse.completion);
+    let { meetingId, meetingType, dialIn, meetingTitle } = JSON.parse(bedrockResponse.completion);
 
-    if (!meetingId || !meetingType) {
+    if (!meetingId || !meetingType || !meetingTitle) {
       return createApiResponse(JSON.stringify('Bad request: Missing meetingId or meetingType'), 400);
     }
 
@@ -82,6 +85,7 @@ export const parseAndHandleCreateMeeting = async (
     await writeDynamo({
       meetingID: meetingId,
       meetingType: meetingType,
+      meetingTitle: meetingTitle,
       scheduledTime: requestedDate.valueOf(),
     });
 
@@ -148,18 +152,16 @@ export function createApiResponse(body: string, statusCode: number = 200): APIGa
 
 export const retrieveAndGenerate = async (
   inputText: string,
-  // sessionId: string
 ): Promise<APIGatewayProxyResult> => {
   const retrieveAndGenerateConfig: RetrieveAndGenerateConfiguration = {
     type: 'KNOWLEDGE_BASE',
     knowledgeBaseConfiguration: {
-      knowledgeBaseId: 'KNOWLEDGE_BASE_ID',
+      knowledgeBaseId: KNOWLEDGE_BASE_ID,
       modelArn: MODEL_ARN,
     },
   };
 
   const input = {
-    // sessionId: sessionId,
     input: {
       text: inputText,
     },
@@ -176,7 +178,33 @@ export const retrieveAndGenerate = async (
   }
 };
 
+export async function handleDownloadRequest(bucketName: string, fileKey: string) {
+  try {
+    const downloadUrl = await getS3DownloadUrl(bucketName, fileKey);
+    return createApiResponse(JSON.stringify({ url: downloadUrl }), 200);
+  } catch (error) {
+    console.error('Error in handleDownloadRequest:', error);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+}
+
 // Private Functions after refactoring
+
+async function getS3DownloadUrl(bucketName: string, fileKey: string) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: fileKey,
+    });
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+    return url;
+  } catch (error) {
+    console.error('Error generating S3 presigned URL: ', error);
+    throw error;
+  }
+}
 
 async function scanDynamoDBTable() {
   const params = {
@@ -198,6 +226,7 @@ async function scanDynamoDBTable() {
         transcript: item.transcript.S,
         callId: item.call_id.S,
         scheduledTime: item.scheduled_time.S,
+        audio: item.meeting_audio.S,
       };
     });
 
@@ -211,10 +240,12 @@ async function scanDynamoDBTable() {
 async function writeDynamo({
   meetingID,
   meetingType,
+  meetingTitle,
   scheduledTime,
 }: {
   meetingID: string;
   meetingType: string;
+  meetingTitle: string
   scheduledTime: number;
 }): Promise<void> {
   await dynamoClient.send(
@@ -224,6 +255,9 @@ async function writeDynamo({
         call_id: { S: meetingID },
         scheduled_time: { S: scheduledTime.toString() },
         meeting_type: { S: meetingType },
+        meeting_title: {S: meetingTitle},
+        meeting_participants: {S: 'Available After Meeting'},
+        meeting_audio : {S: 'Available After Meeting'},
         transcript: { S: 'Available After Meeting' },
         summary: { S: 'Available After The Meeting' },
       },
@@ -331,6 +365,8 @@ const createPrompt = (meetingInvitation: string): string => {
           6. Other notes
           - Ensure that the program does not create fake phone numbers and only includes the Microsoft or Google dial-in number if the meeting type is Google or Teams.
           - Ensure that the meetingId matches perfectly.
+          - If present extract a "meeting title" and store it in the FINAL JSON Response as "meetingTitle"
+          - If no title is detected then store the value of "No Title Detected In Invite"
 
           
           7.    Generate FINAL JSON Response:
@@ -340,6 +376,7 @@ const createPrompt = (meetingInvitation: string): string => {
                 meetingId: "meeting id goes here with spaces removed",
                 meetingType: "meeting type goes here (options: 'Chime', 'Webex', 'Zoom', 'Google', 'Teams')",
                 dialIn: "Insert Microsoft or Google Dial-In number with no dashes or spaces, or N/A if not a Google Meeting or Teams Meeting"
+                meetingTitle: "Insert Extracted Meeting Title or return 'No Title Detected in Invite",
               }
 
               Meeting ID Formats:

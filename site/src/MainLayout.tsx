@@ -31,7 +31,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 const idToken = session.tokens?.idToken;
                 if (idToken) {
                     const email = typeof idToken.payload.email === 'string' ? idToken.payload.email : '';
-                    setUserEmail(email);
+                    const alias = email.split('@')[0];
+                    setUserEmail(alias);
                 } else {
                     setUserEmail('');
                 }
