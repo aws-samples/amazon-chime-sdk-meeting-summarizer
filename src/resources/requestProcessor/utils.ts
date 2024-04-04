@@ -3,13 +3,13 @@ import {
   RetrieveAndGenerateCommand,
   RetrieveAndGenerateConfiguration,
 } from '@aws-sdk/client-bedrock-agent-runtime';
+
 import {
   BedrockRuntimeClient,
   InvokeModelCommand,
   InvokeModelCommandInput,
   InvokeModelCommandOutput,
 } from '@aws-sdk/client-bedrock-runtime';
-
 
 import {
   ChimeSDKVoiceClient,
@@ -20,6 +20,8 @@ import {
   DynamoDBClient,
   PutItemCommand,
   ScanCommand,
+  GetItemCommand,
+  UpdateItemCommand,
 } from '@aws-sdk/client-dynamodb';
 
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -188,6 +190,47 @@ export async function handleDownloadRequest(bucketName: string, fileKey: string)
   }
 }
 
+export async function handleTitleUpdate(callId: string, scheduledTime: string, newTitle: string): Promise<APIGatewayProxyResult> {
+  const getParams = {
+    TableName: TABLE_NAME,
+    Key: {
+      call_id: { S: callId },
+      scheduled_time: { S: scheduledTime },
+    },
+  };
+
+  try {
+
+    const getCommand = new GetItemCommand(getParams);
+    const getResult = await dynamoClient.send(getCommand);
+
+    if (!getResult.Item) {
+      console.log('Item not found');
+      return createApiResponse(JSON.stringify('Item not found'), 500);
+    }
+
+    const updateParams = {
+      TableName: TABLE_NAME,
+      Key: {
+        call_id: { S: callId },
+        scheduled_time: { S: scheduledTime },
+      },
+      UpdateExpression: 'set meeting_title = :newTitle',
+      ExpressionAttributeValues: {
+        ':newTitle': { S: newTitle },
+      },
+    };
+
+    const updateCommand = new UpdateItemCommand(updateParams);
+    const updateResponse = await dynamoClient.send(updateCommand);
+    return createApiResponse(JSON.stringify({ message: updateResponse }), 200);
+
+  } catch (error) {
+    console.error('Error in handleTitleUpdate:', error);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+}
+
 // Private Functions after refactoring
 
 async function getS3DownloadUrl(bucketName: string, fileKey: string) {
@@ -227,6 +270,8 @@ async function scanDynamoDBTable() {
         callId: item.call_id.S,
         scheduledTime: item.scheduled_time.S,
         audio: item.meeting_audio.S,
+        title: item.meeting_title.S,
+        participants: item.meeting_participants.S,
       };
     });
 
@@ -245,7 +290,7 @@ async function writeDynamo({
 }: {
   meetingID: string;
   meetingType: string;
-  meetingTitle: string
+  meetingTitle: string;
   scheduledTime: number;
 }): Promise<void> {
   await dynamoClient.send(
@@ -255,9 +300,9 @@ async function writeDynamo({
         call_id: { S: meetingID },
         scheduled_time: { S: scheduledTime.toString() },
         meeting_type: { S: meetingType },
-        meeting_title: {S: meetingTitle},
-        meeting_participants: {S: 'Available After Meeting'},
-        meeting_audio : {S: 'Available After Meeting'},
+        meeting_title: { S: meetingTitle },
+        meeting_participants: { S: 'Available After Meeting' },
+        meeting_audio: { S: 'Available After Meeting' },
         transcript: { S: 'Available After Meeting' },
         summary: { S: 'Available After The Meeting' },
       },

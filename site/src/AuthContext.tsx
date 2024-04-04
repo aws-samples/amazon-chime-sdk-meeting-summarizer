@@ -1,4 +1,4 @@
-import React, { ReactNode, createContext, useContext, useState } from 'react';
+import React, { ReactNode, createContext, useContext, useMemo, useState } from 'react';
 
 interface AuthContextType {
     authToken: string | null | undefined;
@@ -42,8 +42,13 @@ export const FileReaderProvider: React.FC<FileReaderProviderProps> = ({ children
         fileKey: '',
     });
 
+    const value = useMemo(() => ({
+        fileData,
+        setFileData
+    }), [fileData]);
+
     return (
-        <FileReaderContext.Provider value={{ fileData, setFileData }}>
+        <FileReaderContext.Provider value={value}>
             {children}
         </FileReaderContext.Provider>
     );

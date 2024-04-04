@@ -1,4 +1,4 @@
-import { Drawer } from "@cloudscape-design/components";
+import { Button, Drawer } from "@cloudscape-design/components";
 import styled, { keyframes } from "styled-components";
 import { Textarea as OriginalTextarea } from '@cloudscape-design/components';
 
@@ -17,13 +17,15 @@ export const TypingDots = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  bottom: 0;
+  position: fixed;
+  bottom: 17%;
+  left: 71%;
   width: 5em;
   height: 2em;
   background-color: #d1dae0;
   border-radius: 30px;
 `;
+
 
 export const TypingDot = styled.div`
   float: left;
@@ -150,15 +152,15 @@ export const FixedButtonContainer = styled.div`
   align-items: center; 
   position: fixed;
   width: 70px;
-  height: 70px;
+  height: 60px;
   bottom: 20px;
   right: 30px;
   z-index: 1000;
   background-color: white;
   border-radius: 50%;
+  text-align: center;
 `;
 
-export const StyledButton = styled.button`
-  border: none;
-  background-color: transparent;
+export const StyledButton = styled(Button)`
+  flex: 1;
 `;

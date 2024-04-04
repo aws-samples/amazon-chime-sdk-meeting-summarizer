@@ -98,7 +98,10 @@ export class Infrastructure extends Construct {
           statements: [
             new PolicyStatement({
               resources: ['*'],
-              actions: ['dynamodb:Scan'],
+              actions: [
+                'dynamodb:Scan',
+                'dynamodb:GetItem',
+              ],
             }),
           ],
         }),
@@ -168,6 +171,7 @@ export class Infrastructure extends Construct {
     const getMeetings = api.root.addResource('getMeetings');
     const retrieveAndGenerate = api.root.addResource('retrieveAndGenerate');
     const downloadFile = api.root.addResource('downloadFile');
+    const updateMeetingTitle = api.root.addResource('updateMeetingTitle');
 
     createMeeting.addMethod('POST', requestIntegration, {
       authorizer: auth,
@@ -182,6 +186,10 @@ export class Infrastructure extends Construct {
       authorizationType: AuthorizationType.COGNITO,
     });
     downloadFile.addMethod('POST', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    updateMeetingTitle.addMethod('POST', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
