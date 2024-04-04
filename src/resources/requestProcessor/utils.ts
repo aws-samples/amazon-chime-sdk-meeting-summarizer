@@ -72,9 +72,9 @@ export const parseAndHandleCreateMeeting = async (
     const bedrockResponse = JSON.parse(
       new TextDecoder().decode((await invokeModel(input)).body),
     );
-    let { meetingId, meetingType, dialIn } = JSON.parse(bedrockResponse.completion);
+    let { meetingId, meetingType, dialIn, meetingTitle } = JSON.parse(bedrockResponse.completion);
 
-    if (!meetingId || !meetingType) {
+    if (!meetingId || !meetingType || !meetingTitle) {
       return createApiResponse(JSON.stringify('Bad request: Missing meetingId or meetingType'), 400);
     }
 
