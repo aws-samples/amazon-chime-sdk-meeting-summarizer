@@ -175,7 +175,7 @@ function PastMeetings() {
         }, [audioFileUrl]);
 
         if (!audioUrl) {
-            return <span>Loading audio...</span>;
+            return <span>Audio not available...</span>;
         }
 
         return (
