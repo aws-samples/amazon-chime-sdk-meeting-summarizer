@@ -256,6 +256,7 @@ async function writeDynamo({
         scheduled_time: { S: scheduledTime.toString() },
         meeting_type: { S: meetingType },
         meeting_title: {S: meetingTitle},
+        meeting_participants: {S: 'Available After Meeting'},
         meeting_audio : {S: 'Available After Meeting'},
         transcript: { S: 'Available After Meeting' },
         summary: { S: 'Available After The Meeting' },
