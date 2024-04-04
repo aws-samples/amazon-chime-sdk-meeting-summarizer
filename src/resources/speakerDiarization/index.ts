@@ -69,7 +69,7 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
       await writeBucket(latestObjectKey, newTranscript, PREFIX || 'diarized-transcript');
       await writeBucket(latestObjectKey, newTranscript, KNOWLEDGE_BASE_PREFIX || 'knowledge-base');
 
-      await updateDynamo(latestObjectKey);
+      await updateDynamo(latestObjectKey, processedSpeakers);
 
       console.log('Lambda function processed successfully.');
       return {
@@ -198,6 +198,7 @@ const writeBucket = async (
 
 const updateDynamo = async (
   latestObjectKey: string,
+  processedSpeakers: string,
 ): Promise<UpdateItemCommandOutput | httpResponse> => {
   const dynamoVariables: meetingInfo = extractCallId(latestObjectKey);
   const newKey = `${PREFIX}/${extractAfterFirstSlash(latestObjectKey)}`;
@@ -211,9 +212,10 @@ const updateDynamo = async (
           call_id: { S: dynamoVariables.meetingID },
           scheduled_time: { S: dynamoVariables.scheduledTime },
         },
-        UpdateExpression: 'SET transcript = :value',
+        UpdateExpression: 'SET transcript = :value,  meeting_participants = :processedSpeakers',
         ExpressionAttributeValues: {
           ':value': { S: value },
+          ':processedSpeakers': { S: processedSpeakers },
         },
       }),
     );
@@ -225,6 +227,7 @@ const updateDynamo = async (
     };
   }
 };
+
 
 const extractCallId = (inputString: string): meetingInfo => {
   const partsAfterFirstSlash = inputString.split('/')[1];

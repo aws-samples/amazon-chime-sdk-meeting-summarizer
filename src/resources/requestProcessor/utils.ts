@@ -85,6 +85,7 @@ export const parseAndHandleCreateMeeting = async (
     await writeDynamo({
       meetingID: meetingId,
       meetingType: meetingType,
+      meetingTitle: meetingTitle,
       scheduledTime: requestedDate.valueOf(),
     });
 
@@ -239,10 +240,12 @@ async function scanDynamoDBTable() {
 async function writeDynamo({
   meetingID,
   meetingType,
+  meetingTitle,
   scheduledTime,
 }: {
   meetingID: string;
   meetingType: string;
+  meetingTitle: string
   scheduledTime: number;
 }): Promise<void> {
   await dynamoClient.send(
@@ -252,7 +255,9 @@ async function writeDynamo({
         call_id: { S: meetingID },
         scheduled_time: { S: scheduledTime.toString() },
         meeting_type: { S: meetingType },
-        meeting_audio: { S: 'Available After Meeting' },
+        meeting_title: {S: meetingTitle},
+        meeting_participants: {S: 'Available After Meeting'},
+        meeting_audio : {S: 'Available After Meeting'},
         transcript: { S: 'Available After Meeting' },
         summary: { S: 'Available After The Meeting' },
       },
@@ -360,6 +365,8 @@ const createPrompt = (meetingInvitation: string): string => {
           6. Other notes
           - Ensure that the program does not create fake phone numbers and only includes the Microsoft or Google dial-in number if the meeting type is Google or Teams.
           - Ensure that the meetingId matches perfectly.
+          - If present extract a "meeting title" and store it in the FINAL JSON Response as "meetingTitle"
+          - If no title is detected then store the value of "No Title Detected In Invite"
 
           
           7.    Generate FINAL JSON Response:
@@ -369,6 +376,7 @@ const createPrompt = (meetingInvitation: string): string => {
                 meetingId: "meeting id goes here with spaces removed",
                 meetingType: "meeting type goes here (options: 'Chime', 'Webex', 'Zoom', 'Google', 'Teams')",
                 dialIn: "Insert Microsoft or Google Dial-In number with no dashes or spaces, or N/A if not a Google Meeting or Teams Meeting"
+                meetingTitle: "Insert Extracted Meeting Title or return 'No Title Detected in Invite",
               }
 
               Meeting ID Formats:
