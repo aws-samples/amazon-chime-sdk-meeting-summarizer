@@ -15,6 +15,7 @@ interface ApiResponseItem {
     summary: string;
     transcript: string;
     audio: string,
+    title: string,
 }
 
 interface ApiResponse {
@@ -152,6 +153,12 @@ function PastMeetings() {
             header: 'Meeting Type',
             cell: (item: ApiResponseItem) => item.meetingType
         },
+        {
+            id: 'title',
+            header: 'Meeting Title',
+            cell: (item: ApiResponseItem) => item.title
+        },
+
         {
             id: 'audio',
             header: 'Meeting Audio',
@@ -444,7 +451,7 @@ function PastMeetings() {
                         return typeof item === 'object' && item !== null &&
                             'callId' in item && 'scheduledTime' in item &&
                             'meetingType' in item && 'summary' in item && 'transcript' in item
-                            && 'audio' in item;
+                            && 'audio' in item && 'title' in item;
                     })) {
                         setApiResponse(responseBody as unknown as ApiResponseItem[]);
                     } else {
