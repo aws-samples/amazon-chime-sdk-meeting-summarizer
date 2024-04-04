@@ -89,3 +89,4 @@ nav:
       - Examples:
           - Scheduling: usage/scheduling-calls.md
   - API Reference: "api"
+  - Frontend Reference: "front"

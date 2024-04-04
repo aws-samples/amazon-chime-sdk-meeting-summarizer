@@ -24,4 +24,5 @@ jobs:
       - run: pip install pillow cairosvg
       - run: npm install
       - run: npx typedoc --out docs/api src/index.ts
+      - run: npx typedoc --out docs/front site/src/index.tsx
       - run: mkdocs gh-deploy --force
