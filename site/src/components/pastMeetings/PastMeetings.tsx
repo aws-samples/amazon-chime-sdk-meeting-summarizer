@@ -14,6 +14,7 @@ interface ApiResponseItem {
     meetingType: string;
     summary: string;
     transcript: string;
+    audio: string,
 }
 
 interface ApiResponse {
@@ -135,12 +136,12 @@ function PastMeetings() {
     const columnDefinitions = [
         {
             id: 'callId',
-            header: 'Call ID',
+            header: 'Meeting ID',
             cell: (item: ApiResponseItem) => item.callId
         },
         {
             id: 'scheduledTime',
-            header: 'Scheduled Time',
+            header: 'Meeting Time',
             cell: (item: ApiResponseItem) => {
                 const date = new Date(Number(item.scheduledTime));
                 return format(date, 'PPpp');
@@ -152,8 +153,59 @@ function PastMeetings() {
             cell: (item: ApiResponseItem) => item.meetingType
         },
         {
+            id: 'audio',
+            header: 'Meeting Audio',
+            cell: (item: ApiResponseItem) => {
+                const AudioPlayer = () => {
+                    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+                    useEffect(() => {
+                        async function fetchAudioUrl() {
+
+                            const audioFileUrl = item.audio;
+                            if (!audioFileUrl) {
+                                console.error('File URL is undefined');
+                                return;
+                            }
+
+                            const bucketName = extractBucketName(audioFileUrl);
+                            if (!bucketName) {
+                                console.error('Failed to extract bucket name');
+                                return;
+                            }
+
+                            const urlParts = audioFileUrl.split(`.s3.amazonaws.com/`);
+                            const fileKey = urlParts.length > 1 ? urlParts[1] : undefined;
+
+                            if (bucketName && fileKey) {
+                                const url = await getDownloadUrl(bucketName, fileKey);
+                                if (url) {
+                                    setAudioUrl(url);
+                                }
+                            }
+                        }
+
+                        fetchAudioUrl();
+                    }, []);
+
+                    if (!audioUrl) {
+                        return <span>Loading audio...</span>;
+                    }
+
+                    return (
+                        <audio controls>
+                            <source src={audioUrl} type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    );
+                };
+
+                return <AudioPlayer />;
+            }
+        },
+        {
             id: 'summary',
-            header: 'Summary',
+            header: 'Meeting Summary',
             cell: (item: ApiResponseItem) => {
                 return (
                     <div>
@@ -235,7 +287,7 @@ function PastMeetings() {
         },
         {
             id: 'transcript',
-            header: 'Transcript',
+            header: 'Meeting Transcript',
             cell: (item: ApiResponseItem) => {
                 return (
                     <div>
@@ -333,11 +385,18 @@ function PastMeetings() {
             propertyLabel: 'Scheduled Time'
         },
         {
-            key: 'meetingType',
-            label: 'Meeting Type',
+            key: 'audio',
+            label: 'Audio',
             dataType: 'string',
-            groupValuesLabel: 'Meeting Type Values',
-            propertyLabel: 'Meeting Type'
+            groupValuesLabel: 'Audio Values',
+            propertyLabel: 'Audio'
+        },
+        {
+            key: 'summary',
+            label: 'Summary',
+            dataType: 'string',
+            groupValuesLabel: 'Summary Values',
+            propertyLabel: 'Summary'
         },
         {
             key: 'summary',
@@ -384,7 +443,8 @@ function PastMeetings() {
                     if (Array.isArray(responseBody) && responseBody.every(item => {
                         return typeof item === 'object' && item !== null &&
                             'callId' in item && 'scheduledTime' in item &&
-                            'meetingType' in item && 'summary' in item && 'transcript' in item;
+                            'meetingType' in item && 'summary' in item && 'transcript' in item
+                            && 'audio' in item;
                     })) {
                         setApiResponse(responseBody as unknown as ApiResponseItem[]);
                     } else {

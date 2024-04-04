@@ -226,6 +226,7 @@ async function scanDynamoDBTable() {
         transcript: item.transcript.S,
         callId: item.call_id.S,
         scheduledTime: item.scheduled_time.S,
+        audio: item.meeting_audio.S,
       };
     });
 
