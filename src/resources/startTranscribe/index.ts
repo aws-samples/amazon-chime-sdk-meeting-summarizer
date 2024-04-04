@@ -1,13 +1,13 @@
 import {
-  TranscribeClient,
-  StartTranscriptionJobCommand,
-} from '@aws-sdk/client-transcribe';
-import { S3Event } from 'aws-lambda';
-import {
   DynamoDBClient,
   UpdateItemCommandOutput,
   UpdateItemCommand,
 } from '@aws-sdk/client-dynamodb';
+import {
+  TranscribeClient,
+  StartTranscriptionJobCommand,
+} from '@aws-sdk/client-transcribe';
+import { S3Event } from 'aws-lambda';
 
 const PREFIX_TRANSCRIBE_S3 = process.env.PREFIX_TRANSCRIBE_S3;
 const BUCKET = process.env.BUCKET;
@@ -35,12 +35,12 @@ export const lambdaHandler = async (
   try {
     const s3bucket = event.Records[0].s3.bucket.name;
     const s3object = event.Records[0].s3.object.key;
-    
-    console.log(s3object)
-    const audioSource = `s3://${s3bucket}/${s3object}`;
-   
 
-    await updateDynamo(s3object)
+    console.log(s3object);
+    const audioSource = `s3://${s3bucket}/${s3object}`;
+
+
+    await updateDynamo(s3object);
 
     const extractBeforeSlash = (s: string) => s.split('/')[1];
     const jobName = extractBeforeSlash(s3object);
@@ -76,7 +76,6 @@ export const lambdaHandler = async (
 };
 
 
-
 const updateDynamo = async (
   latestObjectKey: string,
 ): Promise<UpdateItemCommandOutput | httpResponse> => {
@@ -97,7 +96,7 @@ const updateDynamo = async (
         },
       }),
     );
-    console.log(response)
+    console.log(response);
     return response;
   } catch (error: any) {
     return {

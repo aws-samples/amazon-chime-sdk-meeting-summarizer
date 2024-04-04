@@ -38,7 +38,6 @@ export class LambdaResources extends Construct {
     super(scope, id);
 
 
-
     const transcribeRole = new Role(this, 'startTranscribeRole', {
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
@@ -118,7 +117,6 @@ export class LambdaResources extends Construct {
     callSummaryRole.addToPolicy(bedrockPolicy);
 
 
-
     props.bucket.grantReadWrite(transcribeRole);
     props.bucket.grantReadWrite(createTranscriptRole);
     props.bucket.grantReadWrite(speakerDiarizationRole);
@@ -126,7 +124,7 @@ export class LambdaResources extends Construct {
 
 
     props.callTable.grantWriteData(speakerDiarizationRole);
-    props.callTable.grantWriteData(transcribeRole)
+    props.callTable.grantWriteData(transcribeRole);
     props.callTable.grantWriteData(callSummaryRole);
 
     this.startTranscribe = new NodejsFunction(this, 'startTranscribeLambda', {
@@ -140,7 +138,7 @@ export class LambdaResources extends Construct {
         BUCKET: props.bucket.bucketName,
         PREFIX_TRANSCRIBE_S3: 'transcribe-output',
         PREFIX_MEETING_MP3: 'meeting-mp3',
-        TABLE: props.callTable.tableName
+        TABLE: props.callTable.tableName,
       },
     });
 

@@ -22,8 +22,8 @@ export class S3Resources extends Construct {
           allowedMethods: [HttpMethods.GET],
           allowedOrigins: ['*'],
           exposedHeaders: [],
-          maxAge: 3000
-        }
+          maxAge: 3000,
+        },
       ],
     });
 
