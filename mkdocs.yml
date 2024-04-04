@@ -83,8 +83,8 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/@glidejs/glide
 
 nav:
-  - Introduction: introduction.md
-  - Installation: install.md
+  - Overview: index.md
+  - Getting Started: getting-started.md
   - Usage:
       - Examples:
           - Scheduling: usage/scheduling-calls.md

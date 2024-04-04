@@ -30,6 +30,7 @@ export class LambdaResources extends Construct {
   public readonly speakerDiarization: Function;
   public readonly callSummary: Function;
 
+
   constructor(scope: Construct, id: string, props: LambdaResourcesProps) {
     super(scope, id);
 
@@ -100,8 +101,7 @@ export class LambdaResources extends Construct {
       effect: Effect.ALLOW,
       actions: ['bedrock:InvokeModel'],
       resources: [
-        `arn:aws:bedrock:${
-          Stack.of(this).region
+        `arn:aws:bedrock:${Stack.of(this).region
         }::foundation-model/anthropic.claude-v2`,
       ],
     });

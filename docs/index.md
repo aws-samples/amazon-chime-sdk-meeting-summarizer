@@ -1,4 +1,4 @@
-# Chime Summarizer - GenAI cross-platform call transcription and summarization bot.
+# Overview
 
 This docs provides an overview of the Chime Summarizer, a CDK application deploying infrastructure for a generative AI cross-platform call transcription and summarization bot. The bot is designed to be compatible with Amazon Chime, Cisco Webex, and Zoom. Leveraging Amazon Bedrock, Chime SDK, and Amazon Transcribe, it captures, transcribes, diarizes, and summarizes meeting audio to deliver comprehensive call summaries.
 
