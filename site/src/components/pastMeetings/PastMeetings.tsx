@@ -112,7 +112,6 @@ function PastMeetings() {
     async function downloadFile(bucketName: string, fileKey: string, fileName: string) {
         try {
             const fileUrl = await getDownloadUrl(bucketName, fileKey);
-            console.log(fileUrl)
             if (typeof fileUrl === 'string') {
                 const link = document.createElement('a');
                 link.href = fileUrl;
@@ -295,7 +294,6 @@ function PastMeetings() {
                                     console.error('File URL is undefined');
                                     return;
                                 }
-                                console.log(fileUrl)
 
                                 const bucketName = extractBucketName(fileUrl);
                                 if (!bucketName) {
@@ -303,14 +301,8 @@ function PastMeetings() {
                                     return;
                                 }
 
-                                console.log(bucketName)
-
-
                                 const urlParts = fileUrl.split(`.s3.amazonaws.com/`);
                                 const fileKey = urlParts.length > 1 ? urlParts[1] : undefined;
-
-                                console.log(fileKey)
-
 
                                 if (fileKey) {
                                     const fileName = extractFileName(fileUrl);
