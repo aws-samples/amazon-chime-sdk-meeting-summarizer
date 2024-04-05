@@ -109,9 +109,9 @@ function PastMeetings() {
         }
     }
 
-    function downloadFile(bucketName: string, fileKey: string, fileName: string) {
+    async function downloadFile(bucketName: string, fileKey: string, fileName: string) {
         try {
-            const fileUrl = getDownloadUrl(bucketName, fileKey);
+            const fileUrl = await getDownloadUrl(bucketName, fileKey);
             if (typeof fileUrl === 'string') {
                 const link = document.createElement('a');
                 link.href = fileUrl;
@@ -126,6 +126,7 @@ function PastMeetings() {
             console.error('Error in file download:', error);
         }
     }
+
 
     function handleReadFile(type: string, fileUrl: string, bucketName: string, fileKey: string,) {
         const epochTimeMatch = fileUrl.match(/\.(\d+)\.txt$/);
