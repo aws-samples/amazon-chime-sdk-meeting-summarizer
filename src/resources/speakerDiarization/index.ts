@@ -119,6 +119,7 @@ const createPrompt = (transcript: string): string => {
     prompt: `Human: You are a meeting transcript names extractor. Go over the transcript and extract the names from it. Use the following instructions in the <instructions></instructions> xml tags
       <transcript> ${transcript} </transcript>
       <instructions>
+      - Some transcripts will be in different languages other than English. 
       - Extract the names like this example - spk_0: "name1", spk_1: "name2".
       - Only extract the names like the example above and do not add any other words to your response
       - Your response should only have a list of "speakers" and their associated name separated by a ":" surrounded by {}
