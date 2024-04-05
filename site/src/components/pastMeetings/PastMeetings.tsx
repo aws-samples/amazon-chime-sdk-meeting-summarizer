@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Pagination, Button, Table, PropertyFilter, PropertyFilterProps, Container, ExpandableSection, Icon } from '@cloudscape-design/components';
+import { Pagination, Button, Table, PropertyFilter, PropertyFilterProps, Container, ExpandableSection, Icon, Input } from '@cloudscape-design/components';
 import { format } from 'date-fns';
 import { get, post } from 'aws-amplify/api';
 import { useNavigate } from 'react-router-dom';
@@ -22,10 +22,15 @@ interface ApiResponse {
     url?: string;
 }
 
-interface FileDetails {
-    bucketName: string;
-    fileKey: string;
+interface AudioPlayerProps {
+    audioFileUrl: string;
 }
+
+interface EditingCellProps {
+    currentValue: string;
+    setValue: (newValue: string) => void;
+}
+
 
 function PastMeetings() {
     const navigate = useNavigate();
@@ -38,6 +43,7 @@ function PastMeetings() {
     const [pageSize, setPageSize] = useState(10);
     const [isLoading, setIsLoading] = useState(true);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [updatedTitle, setUpdatedTitle] = useState('');
 
 
     const { authToken } = useContext(AuthContext);
@@ -103,9 +109,9 @@ function PastMeetings() {
         }
     }
 
-    async function downloadFile(bucketName: string, fileKey: string, fileName: string) {
+    function downloadFile(bucketName: string, fileKey: string, fileName: string) {
         try {
-            const fileUrl = await getDownloadUrl(bucketName, fileKey);
+            const fileUrl = getDownloadUrl(bucketName, fileKey);
             if (typeof fileUrl === 'string') {
                 const link = document.createElement('a');
                 link.href = fileUrl;
@@ -134,6 +140,87 @@ function PastMeetings() {
         navigate(`/reader/${type}/${epochTime}`);
     }
 
+    const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioFileUrl }) => {
+        const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+        useEffect(() => {
+            async function fetchAudioUrl() {
+                if (!audioFileUrl) {
+                    console.error('File URL is undefined');
+                    return;
+                }
+
+                const bucketName = extractBucketName(audioFileUrl);
+                if (!bucketName) {
+                    console.error('Failed to extract bucket name');
+                    return;
+                }
+
+                const urlParts = audioFileUrl.split(`.s3.amazonaws.com/`);
+                const fileKey = urlParts.length > 1 ? urlParts[1] : undefined;
+
+                if (bucketName && fileKey) {
+                    try {
+                        const url = await getDownloadUrl(bucketName, fileKey);
+                        if (url) {
+                            setAudioUrl(url);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching audio URL:', error);
+                    }
+                }
+            }
+
+            fetchAudioUrl();
+        }, [audioFileUrl]);
+
+        if (!audioUrl) {
+            return <span>Audio not available...</span>;
+        }
+
+        return (
+            <audio controls>
+                <source src={audioUrl} type="audio/wav" />
+                Your browser does not support the audio element.
+            </audio>
+        );
+    };
+
+    async function updateMeetingTitle(meetingId: string, scheduledTime: string, newTitle: string): Promise<string | null> {
+        if (!authToken) {
+            const message = "Authorization token is missing.";
+            setErrorMessage(message);
+            console.log(message);
+            return null;
+        }
+
+        try {
+            const restOperation = await post({
+                apiName: 'request',
+                path: 'updateMeetingTitle',
+                options: {
+                    headers: { Authorization: authToken },
+                    body: { meetingId, scheduledTime, newTitle }
+                },
+            });
+
+            const response = await restOperation.response;
+
+            if (response.statusCode === 200) {
+                const data = await response.body.json() as null;
+                return data
+            } else {
+                const errorData = await response.body.json();
+                console.log(errorData)
+                return null;
+            }
+
+        } catch (error) {
+            console.error('Error updating the title:', error);
+            return null;
+        }
+    }
+
     const columnDefinitions = [
         {
             id: 'callId',
@@ -156,59 +243,37 @@ function PastMeetings() {
         {
             id: 'title',
             header: 'Meeting Title',
-            cell: (item: ApiResponseItem) => item.title
-        },
+            cell: (item: ApiResponseItem) => item.title,
+            isRowHeader: true,
+            editConfig: {
+                ariaLabel: "Title",
+                editIconAriaLabel: "editable",
+                errorIconAriaLabel: "Title Error",
+                editingCell: (
+                    item: ApiResponseItem,
+                    { currentValue, setValue }: EditingCellProps
+                ) => {
 
+                    return (
+                        <Input
+                            autoFocus={true}
+                            value={currentValue ?? item.title}
+                            onChange={event => {
+                                setValue(event.detail.value)
+                                setUpdatedTitle(event.detail.value)
+                            }
+                            }
+                        />
+                    );
+                },
+            }
+        },
         {
             id: 'audio',
             header: 'Meeting Audio',
-            cell: (item: ApiResponseItem) => {
-                const AudioPlayer = () => {
-                    const [audioUrl, setAudioUrl] = useState<string | null>(null);
-
-                    useEffect(() => {
-                        async function fetchAudioUrl() {
-
-                            const audioFileUrl = item.audio;
-                            if (!audioFileUrl) {
-                                console.error('File URL is undefined');
-                                return;
-                            }
-
-                            const bucketName = extractBucketName(audioFileUrl);
-                            if (!bucketName) {
-                                console.error('Failed to extract bucket name');
-                                return;
-                            }
-
-                            const urlParts = audioFileUrl.split(`.s3.amazonaws.com/`);
-                            const fileKey = urlParts.length > 1 ? urlParts[1] : undefined;
-
-                            if (bucketName && fileKey) {
-                                const url = await getDownloadUrl(bucketName, fileKey);
-                                if (url) {
-                                    setAudioUrl(url);
-                                }
-                            }
-                        }
-
-                        fetchAudioUrl();
-                    }, []);
-
-                    if (!audioUrl) {
-                        return <span>Loading audio...</span>;
-                    }
-
-                    return (
-                        <audio controls>
-                            <source src={audioUrl} type="audio/wav" />
-                            Your browser does not support the audio element.
-                        </audio>
-                    );
-                };
-
-                return <AudioPlayer />;
-            }
+            cell: (item: ApiResponseItem) =>
+                <AudioPlayer audioFileUrl={item.audio}
+                />
         },
         {
             id: 'summary',
@@ -222,6 +287,7 @@ function PastMeetings() {
                             variant="link"
                             ariaLabel="Download Summary"
                             onClick={() => {
+
                                 const fileUrl = item.summary;
                                 if (!fileUrl) {
                                     console.error('File URL is undefined');
@@ -260,6 +326,7 @@ function PastMeetings() {
                             variant="link"
                             iconAlign="left"
                             onClick={() => {
+
                                 const fileUrl = item.summary;
                                 if (!fileUrl) {
                                     console.error('File URL is undefined');
@@ -284,7 +351,9 @@ function PastMeetings() {
                                 } else {
                                     console.error('Failed to extract file key');
                                 }
+
                             }}
+
                         >
                             Read File
                         </Button>
@@ -304,6 +373,7 @@ function PastMeetings() {
                             variant="link"
                             ariaLabel="Download Transcript"
                             onClick={() => {
+
                                 const fileUrl = item.transcript;
                                 if (!fileUrl) {
                                     console.error('File URL is undefined');
@@ -329,6 +399,7 @@ function PastMeetings() {
                                 } else {
                                     console.error('Failed to extract file key');
                                 }
+
                             }}
                         >
                             Download
@@ -342,6 +413,7 @@ function PastMeetings() {
                             iconAlign="left"
                             variant="link"
                             onClick={() => {
+
                                 const fileUrl = item.transcript;
                                 if (!fileUrl) {
                                     console.error('File URL is undefined');
@@ -366,6 +438,7 @@ function PastMeetings() {
                                 } else {
                                     console.error('Failed to extract file key');
                                 }
+
                             }}
                         >
                             Read File
@@ -397,13 +470,6 @@ function PastMeetings() {
             dataType: 'string',
             groupValuesLabel: 'Audio Values',
             propertyLabel: 'Audio'
-        },
-        {
-            key: 'summary',
-            label: 'Summary',
-            dataType: 'string',
-            groupValuesLabel: 'Summary Values',
-            propertyLabel: 'Summary'
         },
         {
             key: 'summary',
@@ -491,7 +557,28 @@ function PastMeetings() {
                         disableContentPaddings
                     >
                         <Table
+                            ariaLabels={{
+                                activateEditLabel: (column, item: ApiResponseItem) =>
+                                    `Edit ${item.title} ${column.header}`,
+                                cancelEditLabel: column =>
+                                    `Cancel editing ${column.header}`,
+                                submitEditLabel: column =>
+                                    `Submit editing ${column.header}`,
+                                tableLabel: "Table with inline editing"
+                            }}
                             loading={isLoading}
+                            stripedRows
+                            submitEdit={async (item: ApiResponseItem) => {
+                                await updateMeetingTitle(item.callId, item.scheduledTime, updatedTitle);
+                                setApiResponse(prevData => {
+                                    return prevData.map(dataItem => {
+                                        if (dataItem.callId === item.callId) {
+                                            return { ...dataItem, title: updatedTitle };
+                                        }
+                                        return dataItem;
+                                    });
+                                });
+                            }}
                             items={paginatedItems}
                             columnDefinitions={columnDefinitions}
                             selectedItems={selectedItems}
@@ -515,11 +602,13 @@ function PastMeetings() {
 
                 <FixedButtonContainer>
                     <StyledButton
+                        variant="link"
+                        iconAlign="left"
                         onClick={() => toggleDrawer()}
                     >
                         <Icon
                             name="contact"
-                            size="large"
+                            size="big"
                             variant="link"
                         />
                     </StyledButton>

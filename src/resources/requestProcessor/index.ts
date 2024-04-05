@@ -3,6 +3,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import {
   createApiResponse,
   handleDownloadRequest,
+  handleTitleUpdate,
   methodNotAllowedResponse,
   parseAndHandleCreateMeeting,
   parseAndHandleGetMeetings,
@@ -57,6 +58,25 @@ export const lambdaHandler = async (
             return handleDownloadRequest(bucketName, fileKey);
           } else {
             return createApiResponse(JSON.stringify('Missing fileKey'), 400);
+          }
+        } else {
+          return createApiResponse(JSON.stringify('No request body found'), 400);
+        }
+      }
+      return methodNotAllowedResponse();
+
+    case '/updateMeetingTitle':
+      if (event.httpMethod === 'POST') {
+        if (event.body) {
+          const body = JSON.parse(event.body);
+          const meetingId = body.meetingId;
+          const scheduledTime = body.scheduledTime;
+          const newTitle = body.newTitle;
+
+          if (meetingId && scheduledTime && newTitle) {
+            return handleTitleUpdate(meetingId, scheduledTime, newTitle);
+          } else {
+            return createApiResponse(JSON.stringify('Missing meetingId or newTitle'), 400);
           }
         } else {
           return createApiResponse(JSON.stringify('No request body found'), 400);
