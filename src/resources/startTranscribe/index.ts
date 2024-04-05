@@ -49,8 +49,9 @@ export const lambdaHandler = async (
     const response = await transcribeClient.send(
       new StartTranscriptionJobCommand({
         TranscriptionJobName: jobName,
-        IdentifyLanguage: true,
-        IdentifyMultipleLanguages: true,
+        LanguageCode: 'pt-BR',
+        // IdentifyLanguage: true,
+        // IdentifyMultipleLanguages: true,
         MediaFormat: 'wav',
         Media: {
           MediaFileUri: audioSource,
