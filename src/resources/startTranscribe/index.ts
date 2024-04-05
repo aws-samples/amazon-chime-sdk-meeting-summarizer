@@ -50,7 +50,6 @@ export const lambdaHandler = async (
       new StartTranscriptionJobCommand({
         TranscriptionJobName: jobName,
         IdentifyLanguage: true,
-        IdentifyMultipleLanguages: true,
         MediaFormat: 'wav',
         Media: {
           MediaFileUri: audioSource,

@@ -97,18 +97,24 @@ const getObject = async (params: {
 
 const createPrompt = (transcript: string): string => {
   return JSON.stringify({
-    prompt: `Human:${transcript} You are a transcript summarizing bot. You will go over the ${transcript} and provide a summary of the  <instructions></instructions> xml tags
+    prompt: `Human: You are a transcript summarizing bot. You will go over the transcript below and provide a summary of the content within the <instructions> tags.
+
+    <transcript> ${transcript} </transcript>
+    
+      <instructions> 
+      - Detect the original language of the transcript and generate the summary in that language. 
+      - Go over the conversation that was had in the transcript. 
+      - Create a summary based on what occurred in the meeting. 
+      - Highlight specific action items that came up in the meeting, including follow-up tasks for each person. 
+      - If relevant, focus on what specific AWS services were mentioned during the conversation. 
+      - If there's sufficient context, infer the speaker's role and mention it in the summary. For instance, "Bob, the customer/designer/sales rep/..." 
+      </instructions>
+    
+    Assistant:
       
-        <instructions>
-            - Go over the conversation that was had in the ${transcript}
-            - Create a summary based on what ocurred on the meeting 
-            - Highlight specific action items that came up in the meeting, including follow-up tasks for each person
-            - If relevant, focus on what specific AWS services were mentioned during the conversation. 
-        </instructions>
-      
-        Assistant: Should I add anything else in my answer?
-      
-        Human: If there is not enough context to generate a proper summary, then just return a string that says "Meeting not long enough to generate a transcript.    \nAssistant:`,
+      Assistant: Should I add anything else in my answer?
+    
+      Human: If there is not enough context to generate a proper summary, then just return a string that says "Meeting not long enough to generate a transcript.    \nAssistant:`,
     max_tokens_to_sample: 4000,
     temperature: 0,
   });

@@ -116,20 +116,22 @@ const getObject = async (params: {
 
 const createPrompt = (transcript: string): string => {
   return JSON.stringify({
-    prompt: `Human:${transcript} You are a meeting transcript names extractor. Go over the ${transcript} and extract the names from it. Use the following instructions in the <instructions></instructions> xml tags
-          
-            <instructions>
-            - Extract the names like this example - spk_0: "name1", spk_1: "name2".
-            - Only extract the names like the example above and do not add any other words to your response
-            - Your response should only have a list of "speakers" and their associated name separated by a ":" surrounded by {}
-            - if there is only one speaker identified then surround your answer with {}
-            - the format should look like this {"spk_0" : "Name", "spk_1: "Name2", etc.}, no unnecessary spacing should be added
-            </instructions>
-          
-            Assistant: Should I add anything else in my answer?
-          
-            Human: Only return a JSON formatted response with the Name and the speaker label associated to it. Do not add any other words to your answer. Do NOT EVER add any introductory sentences in your answer. Only give the names of the speakers actively speaking in the meeting. Only give the names of the speakers actively speaking in the meeting in the format shown above.
-               \nAssistant:`,
+    prompt: `Human: You are a meeting transcript names extractor. Go over the transcript and extract the names from it. Use the following instructions in the <instructions></instructions> xml tags
+      <transcript> ${transcript} </transcript>
+      <instructions>
+      - Some transcripts will be in different languages other than English. 
+      - Extract the names like this example - spk_0: "name1", spk_1: "name2".
+      - Only extract the names like the example above and do not add any other words to your response
+      - Your response should only have a list of "speakers" and their associated name separated by a ":" surrounded by {}
+      - if there is only one speaker identified then surround your answer with {}
+      - the format should look like this {"spk_0" : "Name", "spk_1: "Name2", etc.}, no unnecessary spacing should be added
+      </instructions>
+    
+      Assistant: Should I add anything else in my answer?
+    
+      Human: Only return a JSON formatted response with the Name and the speaker label associated to it. Do not add any other words to your answer. Do NOT EVER add any introductory sentences in your answer. Only give the names of the speakers actively speaking in the meeting. Only give the names of the speakers actively speaking in the meeting in the format shown above.
+      
+    Assistant:`,
     max_tokens_to_sample: 4000,
     temperature: 0,
   });
