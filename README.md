@@ -1,6 +1,24 @@
-# Amazon Chime SDK Meeting Summarizer
-
-For additional documentation: https://aws-samples.github.io/amazon-chime-sdk-meeting-summarizer/
+<p align="center">
+ <h2 align="center">Amazon Chime SDK Meeting Summarizer</h2>
+ <p align="center">CDK application deploying infrastructure for a generative AI cross-platform call transcription and summarization bot.</p>
+  </p>
+    <p align="center">
+      <a href="https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/actions">
+        <img alt="Build Passing" src="https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/workflows/build/badge.svg" />
+      </a>
+      <a href="https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/graphs/contributors">
+        <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/aws-samples/amazon-chime-sdk-meeting-summarizer" />
+      </a>
+      <a href="https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/issues">
+        <img alt="Issues" src="https://img.shields.io/github/issues/aws-samples/amazon-chime-sdk-meeting-summarizer?color=0088ff" />
+      </a>
+      <a href="https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/pulls">
+        <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/aws-samples/amazon-chime-sdk-meeting-summarizer?color=0088ff" />
+      </a>
+    </p>
+    <p align="center">For additional documentation: https://aws-samples.github.io/amazon-chime-sdk-meeting-summarizer</p>
+  </p>
+</p>
 
 ![Image](/images/Diagram.png)
 
