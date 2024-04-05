@@ -7,3 +7,4 @@ export * from './cloudwatch';
 export * from './site';
 export * from './cognito';
 export * from './infrastructure';
+export * from './bedrock';

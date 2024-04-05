@@ -33,11 +33,13 @@ interface InfrastructureProps {
   smaApp: ChimeSipMediaApp;
   phoneNumber: ChimePhoneNumber;
   dialOut: Function;
+  knowledgeBaseId: string;
 }
 
 export class Infrastructure extends Construct {
   public apiUrl: string;
   public requestProcessorLambda: Function;
+
 
   constructor(scope: Construct, id: string, props: InfrastructureProps) {
     super(scope, id);
@@ -46,13 +48,26 @@ export class Infrastructure extends Construct {
       assumedBy: new CompositePrincipal(
         new ServicePrincipal('lambda.amazonaws.com'),
         new ServicePrincipal('scheduler.amazonaws.com'),
+        new ServicePrincipal('dynamodb.amazonaws.com'),
       ),
       inlinePolicies: {
         ['BedrockPolicy']: new PolicyDocument({
           statements: [
             new PolicyStatement({
               resources: ['*'],
-              actions: ['bedrock:InvokeModel'],
+              actions: [
+                'bedrock:InvokeModel',
+                'bedrock:GetAgentKnowledgeBase',
+                'bedrock:GetFoundationModel',
+                'bedrock:GetFoundationModelAvailability',
+                'bedrock:GetKnowledgeBase',
+                'bedrock:InvokeAgent',
+                'bedrock:InvokeModel',
+                'bedrock:InvokeModelWithResponseStream',
+                'bedrock:ListAgentKnowledgeBases',
+                'bedrock:Retrieve',
+                'bedrock:RetrieveAndGenerate',
+              ],
             }),
           ],
         }),
@@ -68,7 +83,25 @@ export class Infrastructure extends Construct {
           statements: [
             new PolicyStatement({
               resources: ['*'],
-              actions: ['scheduler:CreateSchedule', 'iam:PassRole'],
+              actions: [
+                'scheduler:CreateSchedule',
+                'scheduler:GetSchedule',
+                'scheduler:GetScheduleGroup',
+                'scheduler:ListScheduleGroups',
+                'scheduler:ListSchedules',
+                'iam:PassRole',
+              ],
+            }),
+          ],
+        }),
+        ['DynamoDBPolicy']: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              resources: ['*'],
+              actions: [
+                'dynamodb:Scan',
+                'dynamodb:GetItem',
+              ],
             }),
           ],
         }),
@@ -97,6 +130,7 @@ export class Infrastructure extends Construct {
           TABLE: props.callTable.tableName,
           SMA_PHONE: props.phoneNumber.phoneNumber,
           SMA_APP: props.smaApp.sipMediaAppId,
+          KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
         },
       },
     );
@@ -112,7 +146,7 @@ export class Infrastructure extends Construct {
           'Authorization',
           'x-amz-security-token',
         ],
-        allowMethods: ['OPTIONS', 'POST'],
+        allowMethods: ['OPTIONS', 'POST', 'GET'],
         allowCredentials: true,
         allowOrigins: ['*'],
       },
@@ -129,13 +163,33 @@ export class Infrastructure extends Construct {
       cognitoUserPools: [props.userPool],
     });
 
-    const request = api.root.addResource('request');
-
     const requestIntegration = new LambdaIntegration(
       this.requestProcessorLambda,
     );
 
-    request.addMethod('POST', requestIntegration, {
+    const createMeeting = api.root.addResource('createMeeting');
+    const getMeetings = api.root.addResource('getMeetings');
+    const retrieveAndGenerate = api.root.addResource('retrieveAndGenerate');
+    const downloadFile = api.root.addResource('downloadFile');
+    const updateMeetingTitle = api.root.addResource('updateMeetingTitle');
+
+    createMeeting.addMethod('POST', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    getMeetings.addMethod('GET', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    retrieveAndGenerate.addMethod('POST', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    downloadFile.addMethod('POST', requestIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    updateMeetingTitle.addMethod('POST', requestIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });

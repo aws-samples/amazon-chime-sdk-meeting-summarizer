@@ -10,7 +10,6 @@ import { Construct } from 'constructs';
 interface CloudWatchResourcesProps {
   smaHandler: Function;
   dialOut: Function;
-  botScheduler: Function;
   createTranscript: Function;
   speakerDiarization: Function;
   callSummary: Function;
@@ -32,7 +31,6 @@ export class CloudWatchResources extends Construct {
       new LogQueryWidget({
         title: 'MeetingSummarizerLogs',
         logGroupNames: [
-          props.botScheduler.logGroup.logGroupName,
           props.smaHandler.logGroup.logGroupName,
           props.callSummary.logGroup.logGroupName,
           props.dialOut.logGroup.logGroupName,

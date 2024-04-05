@@ -1,20 +1,43 @@
 import {
+  BedrockAgentRuntimeClient,
+  RetrieveAndGenerateCommand,
+  RetrieveAndGenerateConfiguration,
+} from '@aws-sdk/client-bedrock-agent-runtime';
+
+import {
   BedrockRuntimeClient,
   InvokeModelCommand,
   InvokeModelCommandInput,
   InvokeModelCommandOutput,
 } from '@aws-sdk/client-bedrock-runtime';
+
 import {
   ChimeSDKVoiceClient,
   CreateSipMediaApplicationCallCommand,
 } from '@aws-sdk/client-chime-sdk-voice';
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  ScanCommand,
+  GetItemCommand,
+  UpdateItemCommand,
+} from '@aws-sdk/client-dynamodb';
+
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import {
   SchedulerClient,
   CreateScheduleCommand,
   CreateScheduleOutput,
+  ListSchedulesCommand,
+  GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
-import moment from 'moment';
+
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+
+import moment from 'moment-timezone';
+
 
 const AWS_REGION = process.env.AWS_REGION;
 const TABLE_NAME = process.env.TABLE || '';
@@ -23,19 +46,329 @@ const SMA_APP = process.env.SMA_APP || '';
 const EVENTBRIDGE_TARGET_LAMBDA = process.env.EVENTBRIDGE_TARGET_LAMBDA || '';
 const EVENTBRIDGE_GROUP_NAME = process.env.EVENTBRIDGE_GROUP_NAME || '';
 const EVENTBRIDGE_LAMBDA_ROLE = process.env.EVENTBRIDGE_LAMBDA_ROLE || '';
+const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID || '';
+const MODEL_ARN = process.env.MODEL_ARN || 'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2';
 
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const schedulerClient = new SchedulerClient({ region: AWS_REGION });
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const chimeSdkClient = new ChimeSDKVoiceClient({ region: AWS_REGION });
+const bedrockRetrieveClient = new BedrockAgentRuntimeClient({ region: AWS_REGION });
+const s3Client = new S3Client({ region: AWS_REGION });
 
 interface httpResponse {
   statusCode: number;
   body: String;
 }
 
+// Functions after refactoring
 
-export //Prompt
+export const parseAndHandleCreateMeeting = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const body = JSON.parse(event.body!);
+    const { meetingInfo, formattedDate, localTimeZone } = body;
+
+    const input = createInvokeModelInput(createPrompt(meetingInfo));
+    const bedrockResponse = JSON.parse(
+      new TextDecoder().decode((await invokeModel(input)).body),
+    );
+    let { meetingId, meetingType, dialIn, meetingTitle } = JSON.parse(bedrockResponse.completion);
+
+    if (!meetingId || !meetingType || !meetingTitle) {
+      return createApiResponse(JSON.stringify('Bad request: Missing meetingId or meetingType'), 400);
+    }
+
+    meetingId = meetingId.replace(/\s/g, '');
+    const requestedDate = moment.tz(formattedDate, localTimeZone);
+    const now = moment.tz(localTimeZone);
+
+    await writeDynamo({
+      meetingID: meetingId,
+      meetingType: meetingType,
+      meetingTitle: meetingTitle,
+      scheduledTime: requestedDate.valueOf(),
+    });
+
+    if (requestedDate.isSameOrBefore(now)) {
+      console.log('Starting summarizer now');
+      await dialOut({
+        meetingID: meetingId,
+        meetingType: meetingType,
+        scheduledTime: requestedDate.valueOf(),
+        dialIn: dialIn,
+      });
+    } else {
+      console.log('Scheduling summarizer for future');
+      await scheduleEventBridge({
+        meetingID: meetingId,
+        meetingType: meetingType,
+        scheduledTime: requestedDate.valueOf(),
+        dialIn,
+      });
+    }
+
+    return createApiResponse(JSON.stringify('Good request'));
+
+
+  } catch (err) {
+    console.error(err);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+};
+
+export const parseAndHandleGetMeetings = async (
+  meetingType: 'Past' | 'Scheduled',
+): Promise<APIGatewayProxyResult> => {
+  try {
+    if (meetingType === 'Scheduled') {
+      const detailedSchedules = await getAllScheduleDetails();
+      return createApiResponse(JSON.stringify(detailedSchedules));
+    } else {
+      const items = await scanDynamoDBTable();
+      return createApiResponse(JSON.stringify(items));
+    }
+  } catch (err) {
+    console.error(err);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+};
+
+export function methodNotAllowedResponse(): APIGatewayProxyResult {
+  return createApiResponse(JSON.stringify('Method Not Allowed'), 405);
+}
+
+export function createApiResponse(body: string, statusCode: number = 200): APIGatewayProxyResult {
+  return {
+    statusCode,
+    body,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+      'Content-Type': 'application/json',
+    },
+  };
+}
+
+export const retrieveAndGenerate = async (
+  inputText: string,
+): Promise<APIGatewayProxyResult> => {
+  const retrieveAndGenerateConfig: RetrieveAndGenerateConfiguration = {
+    type: 'KNOWLEDGE_BASE',
+    knowledgeBaseConfiguration: {
+      knowledgeBaseId: KNOWLEDGE_BASE_ID,
+      modelArn: MODEL_ARN,
+    },
+  };
+
+  const input = {
+    input: {
+      text: inputText,
+    },
+    retrieveAndGenerateConfiguration: retrieveAndGenerateConfig,
+  };
+
+  try {
+    const command = new RetrieveAndGenerateCommand(input);
+    const response = await bedrockRetrieveClient.send(command);
+    return createApiResponse(JSON.stringify(response));
+  } catch (err) {
+    console.error('Error in retrieveAndGenerate:', err);
+    throw err;
+  }
+};
+
+export async function handleDownloadRequest(bucketName: string, fileKey: string) {
+  try {
+    const downloadUrl = await getS3DownloadUrl(bucketName, fileKey);
+    return createApiResponse(JSON.stringify({ url: downloadUrl }), 200);
+  } catch (error) {
+    console.error('Error in handleDownloadRequest:', error);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+}
+
+export async function handleTitleUpdate(callId: string, scheduledTime: string, newTitle: string): Promise<APIGatewayProxyResult> {
+  const getParams = {
+    TableName: TABLE_NAME,
+    Key: {
+      call_id: { S: callId },
+      scheduled_time: { S: scheduledTime },
+    },
+  };
+
+  try {
+
+    const getCommand = new GetItemCommand(getParams);
+    const getResult = await dynamoClient.send(getCommand);
+
+    if (!getResult.Item) {
+      console.log('Item not found');
+      return createApiResponse(JSON.stringify('Item not found'), 500);
+    }
+
+    const updateParams = {
+      TableName: TABLE_NAME,
+      Key: {
+        call_id: { S: callId },
+        scheduled_time: { S: scheduledTime },
+      },
+      UpdateExpression: 'set meeting_title = :newTitle',
+      ExpressionAttributeValues: {
+        ':newTitle': { S: newTitle },
+      },
+    };
+
+    const updateCommand = new UpdateItemCommand(updateParams);
+    const updateResponse = await dynamoClient.send(updateCommand);
+    return createApiResponse(JSON.stringify({ message: updateResponse }), 200);
+
+  } catch (error) {
+    console.error('Error in handleTitleUpdate:', error);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+}
+
+// Private Functions after refactoring
+
+async function getS3DownloadUrl(bucketName: string, fileKey: string) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: fileKey,
+    });
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+    return url;
+  } catch (error) {
+    console.error('Error generating S3 presigned URL: ', error);
+    throw error;
+  }
+}
+
+async function scanDynamoDBTable() {
+  const params = {
+    TableName: TABLE_NAME,
+  };
+
+  try {
+    const command = new ScanCommand(params);
+    const scanResult = await dynamoClient.send(command);
+
+    if (!scanResult.Items) {
+      return [];
+    }
+
+    const transformedItems = scanResult.Items.map(item => {
+      return {
+        summary: item.summary.S,
+        meetingType: item.meeting_type.S,
+        transcript: item.transcript.S,
+        callId: item.call_id.S,
+        scheduledTime: item.scheduled_time.S,
+        audio: item.meeting_audio.S,
+        title: item.meeting_title.S,
+        participants: item.meeting_participants.S,
+      };
+    });
+
+    return transformedItems;
+  } catch (err) {
+    console.error('Error scanning DynamoDB table:', err);
+    return createApiResponse(JSON.stringify('Internal Server Error'), 500);
+  }
+}
+
+async function writeDynamo({
+  meetingID,
+  meetingType,
+  meetingTitle,
+  scheduledTime,
+}: {
+  meetingID: string;
+  meetingType: string;
+  meetingTitle: string;
+  scheduledTime: number;
+}): Promise<void> {
+  await dynamoClient.send(
+    new PutItemCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        call_id: { S: meetingID },
+        scheduled_time: { S: scheduledTime.toString() },
+        meeting_type: { S: meetingType },
+        meeting_title: { S: meetingTitle },
+        meeting_participants: { S: 'Available After Meeting' },
+        meeting_audio: { S: 'Available After Meeting' },
+        transcript: { S: 'Available After Meeting' },
+        summary: { S: 'Available After The Meeting' },
+      },
+    }),
+  );
+}
+
+const listSchedulesInGroup = async () => {
+  if (!EVENTBRIDGE_GROUP_NAME) {
+    console.error('EventBridge group name is not set.');
+    throw new Error('EventBridge group name is required.');
+  }
+
+  try {
+    const command = new ListSchedulesCommand({ GroupName: EVENTBRIDGE_GROUP_NAME });
+    const response = await schedulerClient.send(command);
+    return response.Schedules;
+  } catch (err) {
+    console.error('Error listing schedules in EventBridge group:', err);
+    throw err;
+  }
+};
+
+const getScheduleDetails = async (scheduleName: string) => {
+  try {
+    const command = new GetScheduleCommand({
+      Name: scheduleName,
+      GroupName: EVENTBRIDGE_GROUP_NAME,
+    });
+    const response = await schedulerClient.send(command);
+    return response;
+  } catch (err) {
+    console.error('Error getting schedule details:', err);
+    throw err;
+  }
+};
+
+const getAllScheduleDetails = async () => {
+  try {
+    const schedulesResponse = await listSchedulesInGroup();
+    if (!schedulesResponse || !Array.isArray(schedulesResponse)) {
+      console.error('No schedules found or schedulesResponse is undefined.');
+      return [];
+    }
+
+    const detailedSchedules = [];
+
+    for (const schedule of schedulesResponse) {
+      if (typeof schedule.Name === 'string') {
+        const details = await getScheduleDetails(schedule.Name);
+        detailedSchedules.push({
+          ...schedule,
+          ScheduleExpression: details.ScheduleExpression,
+        });
+      } else {
+        console.error('Schedule name is undefined for a schedule:', schedule);
+      }
+    }
+
+    return detailedSchedules;
+  } catch (err) {
+    console.error('Error retrieving all schedule details:', err);
+    throw err;
+  }
+};
+
 const createPrompt = (meetingInvitation: string): string => {
   return JSON.stringify({
     prompt: `Human:${meetingInvitation} You are a an information extracting bot. Go over the ${meetingInvitation} and determine what the meeting id and meeting type are <instructions></instructions> xml tags
@@ -77,6 +410,8 @@ const createPrompt = (meetingInvitation: string): string => {
           6. Other notes
           - Ensure that the program does not create fake phone numbers and only includes the Microsoft or Google dial-in number if the meeting type is Google or Teams.
           - Ensure that the meetingId matches perfectly.
+          - If present extract a "meeting title" and store it in the FINAL JSON Response as "meetingTitle"
+          - If no title is detected then store the value of "No Title Detected In Invite"
 
           
           7.    Generate FINAL JSON Response:
@@ -86,6 +421,7 @@ const createPrompt = (meetingInvitation: string): string => {
                 meetingId: "meeting id goes here with spaces removed",
                 meetingType: "meeting type goes here (options: 'Chime', 'Webex', 'Zoom', 'Google', 'Teams')",
                 dialIn: "Insert Microsoft or Google Dial-In number with no dashes or spaces, or N/A if not a Google Meeting or Teams Meeting"
+                meetingTitle: "Insert Extracted Meeting Title or return 'No Title Detected in Invite",
               }
 
               Meeting ID Formats:
@@ -100,25 +436,8 @@ const createPrompt = (meetingInvitation: string): string => {
     temperature: 0,
   });
 };
-export const createInvokeModelInput = (
-  prompt: string,
-): InvokeModelCommandInput => {
-  return {
-    body: prompt,
-    modelId: 'anthropic.claude-v2',
-    accept: 'application/json',
-    contentType: 'application/json',
-  };
-};
 
-export const invokeModel = async (
-  input: InvokeModelCommandInput,
-): Promise<InvokeModelCommandOutput> => {
-  const output = await bedrockClient.send(new InvokeModelCommand(input));
-  return output;
-};
-
-export const scheduleEventBridge = async ({
+const scheduleEventBridge = async ({
   meetingID,
   meetingType,
   scheduledTime,
@@ -164,30 +483,25 @@ export const scheduleEventBridge = async ({
   return result;
 };
 
-export async function writeDynamo({
-  meetingID,
-  meetingType,
-  scheduledTime,
-}: {
-  meetingID: string;
-  meetingType: string;
-  scheduledTime: number;
-}): Promise<void> {
-  await dynamoClient.send(
-    new PutItemCommand({
-      TableName: TABLE_NAME,
-      Item: {
-        call_id: { S: meetingID },
-        scheduled_time: { S: scheduledTime.toString() },
-        meeting_type: { S: meetingType },
-        transcript: { S: 'Available After Meeting' },
-        summary: { S: 'Available After The Meeting' },
-      },
-    }),
-  );
-}
+const invokeModel = async (
+  input: InvokeModelCommandInput,
+): Promise<InvokeModelCommandOutput> => {
+  const output = await bedrockClient.send(new InvokeModelCommand(input));
+  return output;
+};
 
-export async function dialOut({
+const createInvokeModelInput = (
+  prompt: string,
+): InvokeModelCommandInput => {
+  return {
+    body: prompt,
+    modelId: 'anthropic.claude-v2',
+    accept: 'application/json',
+    contentType: 'application/json',
+  };
+};
+
+async function dialOut({
   meetingType,
   meetingID,
   scheduledTime,
@@ -199,6 +513,7 @@ export async function dialOut({
   dialIn: string;
 
 }): Promise<httpResponse> {
+
   console.log(
     `dialing out meetingType: ${meetingType} MeetingId:${meetingID} at ${scheduledTime.toString()}`,
   );
@@ -307,5 +622,3 @@ export async function dialOut({
     };
   }
 }
-
-

@@ -11,6 +11,7 @@ import {
   Site,
   Infrastructure,
   Cognito,
+  BedrockKnowledgeBaseResources,
 } from './';
 
 config();
@@ -39,12 +40,24 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
       { dialOut: chimeResources.dialOut },
     );
 
+    const bedrockResources = new BedrockKnowledgeBaseResources(
+      this,
+      'BedrockKnowledgeBaseResources',
+      {
+        bucket: s3Resources.processingBucket,
+        namePrefix: 'chatbot-knowledge-base',
+      },
+    );
+
     const lambdaResources = new LambdaResources(this, 'lambdaResources', {
       bucket: s3Resources.processingBucket,
       callTable: databaseResources.callTable,
       eventbridge: eventbridgeResources.eventbridgeScheduleGroup,
       eventbridge_role: eventbridgeResources.eventbridgeRole,
       dialOut: chimeResources.dialOut,
+      logLevel: props.logLevel,
+      knowledgeBaseId: bedrockResources.knowledgeBaseId,
+      dataSourceId: bedrockResources.dataSourceId,
     });
 
     const cognitoResources = new Cognito(this, 'Cognito', {
@@ -60,6 +73,7 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
       dialOut: chimeResources.dialOut,
       smaApp: chimeResources.smaApp,
       phoneNumber: chimeResources.phoneNumber,
+      knowledgeBaseId: bedrockResources.knowledgeBaseId,
     });
 
     const site = new Site(this, 'Site', {
@@ -70,10 +84,10 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
       identityPool: cognitoResources.identityPool,
     });
 
+
     new CloudWatchResources(this, 'cloudwatchResources', {
       smaHandler: chimeResources.smaHandler,
       dialOut: chimeResources.dialOut,
-      botScheduler: lambdaResources.botScheduler,
       createTranscript: lambdaResources.createTranscript,
       speakerDiarization: lambdaResources.speakerDiarization,
       callSummary: lambdaResources.callSummary,
@@ -84,6 +98,18 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
     new CfnOutput(this, 'siteBucket', { value: site.siteBucket.bucketName });
     new CfnOutput(this, 'summarizerSite', {
       value: site.distribution.distributionDomainName,
+    });
+    new CfnOutput(this, 'knowledgeBaseRoleArn', {
+      value: bedrockResources.knowledgeBaseRole.roleArn,
+    });
+    new CfnOutput(this, 'dataSourceId', {
+      value: bedrockResources.dataSourceId,
+    });
+    new CfnOutput(this, 'collectionName', {
+      value: bedrockResources.collectionName,
+    });
+    new CfnOutput(this, 'knowledgeBaseId', {
+      value: bedrockResources.knowledgeBaseId,
     });
   }
 }

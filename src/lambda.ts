@@ -2,12 +2,12 @@
 import { Stack, Duration } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import {
-  CompositePrincipal,
   ManagedPolicy,
   Role,
   ServicePrincipal,
   Effect,
   PolicyStatement,
+  PolicyDocument,
 } from 'aws-cdk-lib/aws-iam';
 import { Function, Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -22,36 +22,22 @@ interface LambdaResourcesProps {
   eventbridge: CfnScheduleGroup;
   eventbridge_role: Role;
   dialOut: Function;
+  logLevel: string;
+  dataSourceId: string;
+  knowledgeBaseId: string;
 }
 export class LambdaResources extends Construct {
-  public readonly botScheduler: Function;
+
   public readonly startTranscribe: Function;
   public readonly createTranscript: Function;
   public readonly speakerDiarization: Function;
   public readonly callSummary: Function;
+  public readonly dataSyncLambda: Function;
 
 
   constructor(scope: Construct, id: string, props: LambdaResourcesProps) {
     super(scope, id);
 
-    const botSchedulerRole = new Role(this, 'botSchedulerRole', {
-      assumedBy: new CompositePrincipal(
-        new ServicePrincipal('lambda.amazonaws.com'),
-        new ServicePrincipal('scheduler.amazonaws.com'),
-      ),
-      managedPolicies: [
-        ManagedPolicy.fromAwsManagedPolicyName(
-          'service-role/AWSLambdaBasicExecutionRole',
-        ),
-      ],
-    });
-
-    const eventBridgeSchedulerPolicy = new PolicyStatement({
-      actions: ['iam:PassRole', 'scheduler:CreateSchedule'],
-      resources: [props.eventbridge_role.roleArn, '*'],
-    });
-
-    botSchedulerRole.addToPolicy(eventBridgeSchedulerPolicy);
 
     const transcribeRole = new Role(this, 'startTranscribeRole', {
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
@@ -67,6 +53,7 @@ export class LambdaResources extends Construct {
       actions: ['transcribe:StartTranscriptionJob'],
       resources: ['*'],
     });
+
 
     transcribeRole.addToPolicy(transcribePolicy);
 
@@ -106,35 +93,40 @@ export class LambdaResources extends Construct {
       ],
     });
 
+    const dataSyncLambdaRole = new Role(this, 'dataSyncLambdaRole', {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      inlinePolicies: {
+        ['bedrockPolicy']: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              resources: ['*'],
+              actions: [
+                'bedrock:StartIngestionJob',
+              ],
+            }),
+          ],
+        }),
+      },
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AWSLambdaBasicExecutionRole',
+        ),
+      ],
+    });
+
     speakerDiarizationRole.addToPolicy(bedrockPolicy);
     callSummaryRole.addToPolicy(bedrockPolicy);
-    botSchedulerRole.addToPolicy(bedrockPolicy);
 
-    props.bucket.grantReadWrite(botSchedulerRole);
+
     props.bucket.grantReadWrite(transcribeRole);
     props.bucket.grantReadWrite(createTranscriptRole);
     props.bucket.grantReadWrite(speakerDiarizationRole);
     props.bucket.grantReadWrite(callSummaryRole);
 
-    props.callTable.grantWriteData(botSchedulerRole);
-    props.callTable.grantWriteData(speakerDiarizationRole);
-    props.callTable.grantWriteData(callSummaryRole);
 
-    this.botScheduler = new NodejsFunction(this, 'botSchedulerLambda', {
-      entry: './src/resources/botScheduler/index.ts',
-      runtime: Runtime.NODEJS_LATEST,
-      architecture: Architecture.ARM_64,
-      handler: 'lambdaHandler',
-      timeout: Duration.minutes(5),
-      role: botSchedulerRole,
-      environment: {
-        Bucket: props.bucket.bucketName,
-        EVENTBRIDGE_TARGET_LAMBDA: props.dialOut.functionArn,
-        EVENTBRIDGE_GROUP_NAME: props.eventbridge.name!,
-        EVENTBRIDGE_LAMBDA_ROLE: props.eventbridge_role.roleArn,
-        TABLE: props.callTable.tableName,
-      },
-    });
+    props.callTable.grantWriteData(speakerDiarizationRole);
+    props.callTable.grantWriteData(transcribeRole);
+    props.callTable.grantWriteData(callSummaryRole);
 
     this.startTranscribe = new NodejsFunction(this, 'startTranscribeLambda', {
       entry: './src/resources/startTranscribe/index.ts',
@@ -147,6 +139,7 @@ export class LambdaResources extends Construct {
         BUCKET: props.bucket.bucketName,
         PREFIX_TRANSCRIBE_S3: 'transcribe-output',
         PREFIX_MEETING_MP3: 'meeting-mp3',
+        TABLE: props.callTable.tableName,
       },
     });
 
@@ -196,12 +189,29 @@ export class LambdaResources extends Construct {
       },
     });
 
+    this.dataSyncLambda = new NodejsFunction(this, 'dataSyncLambda', {
+      entry: './src/resources/dataSync/index.ts',
+      runtime: Runtime.NODEJS_LATEST,
+      architecture: Architecture.ARM_64,
+      handler: 'handler',
+      timeout: Duration.minutes(5),
+      role: dataSyncLambdaRole,
+      environment: {
+        KNOWLEDGE_BASE_ID: props.knowledgeBaseId,
+        DATA_SOURCE_ID: props.dataSourceId,
+        LOG_LEVEL: props.logLevel,
+      },
+    });
+
+    props.bucket.grantRead(this.dataSyncLambda);
+
     props.bucket.addEventNotification(
       EventType.OBJECT_CREATED,
-      new LambdaDestination(this.botScheduler),
-      { prefix: 'meeting-invite' },
+      new LambdaDestination(this.dataSyncLambda),
+      { prefix: 'knowledge-base' },
       { suffix: '.txt' },
     );
+
     props.bucket.addEventNotification(
       EventType.OBJECT_CREATED,
       new LambdaDestination(this.startTranscribe),
