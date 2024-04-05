@@ -22,6 +22,7 @@ const AWS_REGION = process.env.AWS_REGION;
 const TABLE = process.env.TABLE;
 const BUCKET = process.env.BUCKET;
 const PREFIX = process.env.CALL_SUMMARY_PREFIX;
+const KNOWLEDGE_BASE_PREFIX = process.env.KNOWLEDGE_BASE_PREFIX;
 
 //import clients
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
@@ -57,7 +58,8 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
       );
       const summary = bedrockResponse.completion;
 
-      await writeBucket(latestObjectKey, summary);
+      await writeBucket(latestObjectKey, summary, PREFIX || 'call-summary');
+      await writeBucket(latestObjectKey, summary, KNOWLEDGE_BASE_PREFIX || 'knowledge-base');
       await updateDynamo(latestObjectKey);
     }
   } catch (error: any) {
@@ -136,9 +138,10 @@ const extractAfterFirstSlash = (input: string): string | undefined => {
 const writeBucket = async (
   latestObjectKey: string,
   summary: string,
+  prefix: string,
 ): Promise<PutObjectCommandOutput | httpResponse> => {
   try {
-    const newKey = `${PREFIX}/${extractAfterFirstSlash(latestObjectKey)}`;
+    const newKey = `${prefix}/${extractAfterFirstSlash(latestObjectKey)}`;
     const command = new PutObjectCommand({
       Bucket: BUCKET,
       Key: newKey,

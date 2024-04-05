@@ -22,6 +22,7 @@ const AWS_REGION = process.env.AWS_REGION;
 const TABLE = process.env.TABLE;
 const BUCKET = process.env.BUCKET;
 const PREFIX = process.env.DIARIZED_TRANSCRIPT_PREFIX;
+const KNOWLEDGE_BASE_PREFIX = process.env.KNOWLEDGE_BASE_PREFIX;
 
 //import clients
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
@@ -65,8 +66,10 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
 
       const newTranscript = replaceSpeakerLabels(transcript, processedSpeakers);
 
-      await writeBucket(latestObjectKey, newTranscript);
-      await updateDynamo(latestObjectKey);
+      await writeBucket(latestObjectKey, newTranscript, PREFIX || 'diarized-transcript');
+      await writeBucket(latestObjectKey, newTranscript, KNOWLEDGE_BASE_PREFIX || 'knowledge-base');
+
+      await updateDynamo(latestObjectKey, processedSpeakers);
 
       console.log('Lambda function processed successfully.');
       return {
@@ -168,9 +171,10 @@ const replaceSpeakerLabels = (
 const writeBucket = async (
   latestObjectKey: string,
   newTranscript: string,
+  prefix: string,
 ): Promise<PutObjectCommandOutput | httpResponse> => {
   try {
-    const newKey = `${PREFIX}/${extractAfterFirstSlash(latestObjectKey)}`;
+    const newKey = `${prefix}/${extractAfterFirstSlash(latestObjectKey)}`;
     const command = new PutObjectCommand({
       Bucket: BUCKET,
       Key: newKey,
@@ -194,6 +198,7 @@ const writeBucket = async (
 
 const updateDynamo = async (
   latestObjectKey: string,
+  processedSpeakers: string,
 ): Promise<UpdateItemCommandOutput | httpResponse> => {
   const dynamoVariables: meetingInfo = extractCallId(latestObjectKey);
   const newKey = `${PREFIX}/${extractAfterFirstSlash(latestObjectKey)}`;
@@ -207,9 +212,10 @@ const updateDynamo = async (
           call_id: { S: dynamoVariables.meetingID },
           scheduled_time: { S: dynamoVariables.scheduledTime },
         },
-        UpdateExpression: 'SET transcript = :value',
+        UpdateExpression: 'SET transcript = :value,  meeting_participants = :processedSpeakers',
         ExpressionAttributeValues: {
           ':value': { S: value },
+          ':processedSpeakers': { S: processedSpeakers },
         },
       }),
     );
@@ -221,6 +227,7 @@ const updateDynamo = async (
     };
   }
 };
+
 
 const extractCallId = (inputString: string): meetingInfo => {
   const partsAfterFirstSlash = inputString.split('/')[1];

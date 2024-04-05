@@ -1,81 +1,91 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import moment from 'moment';
 import {
-  createPrompt,
-  createInvokeModelInput,
-  invokeModel,
-  dialOut,
-  writeDynamo,
-  scheduleEventBridge,
+  createApiResponse,
+  handleDownloadRequest,
+  handleTitleUpdate,
+  methodNotAllowedResponse,
+  parseAndHandleCreateMeeting,
+  parseAndHandleGetMeetings,
+  retrieveAndGenerate,
 } from './utils';
-
-const response: APIGatewayProxyResult = {
-  body: '',
-  statusCode: 200,
-  headers: {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json',
-  },
-};
 
 export const lambdaHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   console.log(event);
-  const body = JSON.parse(event.body!);
 
-  const input = createInvokeModelInput(createPrompt(body.meetingInfo));
-  console.log(`input: ${JSON.stringify(input, null, 2)}`);
-  const bedrockResponse = JSON.parse(
-    new TextDecoder().decode((await invokeModel(input)).body),
-  );
-  console.log(`bedrockResponse: ${JSON.stringify(bedrockResponse, null, 2)}`);
-  let { meetingId, meetingType, dialIn } = JSON.parse(bedrockResponse.completion);
-  if (!meetingId || !meetingType) {
-    response.body = JSON.stringify('bad request');
-    response.statusCode = 500;
-    return response;
-  }
-  meetingId = meetingId.replace(/\s/g, ''); // Remove spaces from meetingId
+  switch (event.resource) {
 
-  console.log(`meetingID: ${meetingId} meetingType: ${meetingType}`);
-  console.log(`body.formattedDate: ${body.formattedDate}`);
-  const requestedDate = moment(body.formattedDate);
-  console.log(`requestedDate: ${requestedDate}`);
-  await writeDynamo({
-    meetingID: meetingId,
-    meetingType: meetingType,
-    scheduledTime: requestedDate.valueOf(),
-  });
+    case '/createMeeting':
+      if (event.httpMethod === 'POST') {
+        return parseAndHandleCreateMeeting(event);
+      }
+      return methodNotAllowedResponse();
 
-  const now = moment();
-  if (requestedDate.isBefore(now)) {
-    console.log('Starting summarizer now');
-    await dialOut({
-      meetingID: meetingId,
-      meetingType: meetingType,
-      scheduledTime: requestedDate.valueOf(),
-      dialIn: dialIn,
-    });
-  } else {
-    console.log('Scheduling summarizer for future');
-    await scheduleEventBridge({
-      meetingID: meetingId,
-      meetingType: meetingType,
-      scheduledTime: requestedDate.valueOf(),
-      dialIn,
-    });
-  }
-  try {
-    response.body = JSON.stringify('good request');
-    return response;
-  } catch (err) {
-    console.log(err);
-    response.body = JSON.stringify('bad request');
-    response.statusCode = 500;
-    return response;
-  }
+    case '/getMeetings':
+      if (event.httpMethod === 'GET') {
+        const meetingType = event.queryStringParameters?.type === 'Scheduled' ? 'Scheduled' : 'Past';
+        return parseAndHandleGetMeetings(meetingType);
+      }
+      return methodNotAllowedResponse();
+
+    case '/retrieveAndGenerate':
+      if (event.httpMethod === 'POST') {
+        if (event.body) {
+          const body = JSON.parse(event.body);
+          const inputText = body.inputText.trim();
+
+          if (inputText) {
+            return retrieveAndGenerate(inputText);
+          } else {
+            return createApiResponse(JSON.stringify('Missing sessionId or inputText'), 400);
+          }
+        } else {
+          return createApiResponse(JSON.stringify('No request body found'), 400);
+        }
+      }
+      return methodNotAllowedResponse();
+
+    case '/downloadFile':
+      if (event.httpMethod === 'POST') {
+        if (event.body) {
+          const body = JSON.parse(event.body);
+          const fileKey = body.fileKey;
+          const bucketName = body.bucketName;
+
+          if (bucketName && fileKey) {
+            return handleDownloadRequest(bucketName, fileKey);
+          } else {
+            return createApiResponse(JSON.stringify('Missing fileKey'), 400);
+          }
+        } else {
+          return createApiResponse(JSON.stringify('No request body found'), 400);
+        }
+      }
+      return methodNotAllowedResponse();
+
+    case '/updateMeetingTitle':
+      if (event.httpMethod === 'POST') {
+        if (event.body) {
+          const body = JSON.parse(event.body);
+          const meetingId = body.meetingId;
+          const scheduledTime = body.scheduledTime;
+          const newTitle = body.newTitle;
+
+          if (meetingId && scheduledTime && newTitle) {
+            return handleTitleUpdate(meetingId, scheduledTime, newTitle);
+          } else {
+            return createApiResponse(JSON.stringify('Missing meetingId or newTitle'), 400);
+          }
+        } else {
+          return createApiResponse(JSON.stringify('No request body found'), 400);
+        }
+      }
+      return methodNotAllowedResponse();
+
+    default:
+      return createApiResponse(JSON.stringify('Not Found'), 404);
+
+  };
 };

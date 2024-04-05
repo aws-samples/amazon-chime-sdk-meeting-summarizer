@@ -10,6 +10,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   appEntrypoint: 'amazon-chime-sdk-meeting-summarizer.ts',
   license: 'MIT-0',
   author: 'Court Schuett',
+  minorVersion: 1,
   copyrightOwner: 'Amazon.com, Inc.',
   authorAddress: 'https://aws.amazon.com',
   devDeps: ['esbuild'],
@@ -18,18 +19,26 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   deps: [
     'fs-extra',
     '@types/fs-extra',
+    '@types/aws-lambda',
     'cdk-amazon-chime-resources',
     '@aws-sdk/client-chime-sdk-voice',
     '@aws-sdk/client-transcribe',
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/client-bedrock-runtime',
+    '@aws-sdk/client-bedrock-agent-runtime',
     '@aws-sdk/client-s3',
     '@aws-sdk/client-scheduler',
+    '@aws-sdk/s3-request-presigner',
+    '@aws-sdk/client-bedrock-agent',
+    '@aws-sdk/client-opensearchserverless',
+    '@aws-sdk/credential-provider-node',
+    '@aws-sdk/client-ssm',
+    '@opensearch-project/opensearch',
     'esbuild',
-    '@types/aws-lambda',
     'aws-lambda',
     'dotenv',
     'moment',
+    'moment-timezone',
   ],
   autoApproveOptions: {
     secret: 'GITHUB_TOKEN',
@@ -45,7 +54,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
 });
 
 project.addTask('launch', {
-  exec: 'yarn && yarn projen && yarn build && yarn cdk bootstrap && yarn cdk deploy  --require-approval never && yarn configLocal',
+  exec: 'yarn && yarn projen && yarn cdk bootstrap && yarn cdk deploy  --require-approval never && yarn configLocal',
 });
 project.addTask('getBucket', {
   exec: "aws cloudformation describe-stacks --stack-name AmazonChimeSDKMeetingSummarizer --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`siteBucket`].OutputValue' --output text",
