@@ -20,7 +20,7 @@
   </p>
 </p>
 
-![Image](/images/Diagram.png)
+![Image](/docs/static/diagram.png)
 
 ## Overview
 
@@ -36,7 +36,7 @@ This README provides an overview of the Chime Summarizer, a CDK application depl
 
 Visit the CloudFront distribution domain name generated during the deployment and create an account. Paste the meeting invite and choose to schedule a time or to trigger the bot immediately. When possible, utilize a 'Copy' button when retreiving meeting invite info to paste into the form.
 
-![Image](/images/FrontendForm.png)
+![Image](/docs/)
 
 2. Upload Directly to the S3 bucket under prefix meeting-invite
 
