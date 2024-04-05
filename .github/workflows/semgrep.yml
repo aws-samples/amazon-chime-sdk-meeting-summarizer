@@ -47,7 +47,3 @@ jobs:
         with:
           sarif_file: semgrep.sarif
         if: always()
-
-      - name: OSSF Scorecard action
-        uses: ossf/scorecard-action@v2.3.1
-  
