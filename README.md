@@ -1,5 +1,7 @@
 # Amazon Chime SDK Meeting Summarizer
 
+For additional documentation: https://aws-samples.github.io/amazon-chime-sdk-meeting-summarizer/
+
 ![Image](/images/Diagram.png)
 
 ## Overview
@@ -12,19 +14,19 @@ This README provides an overview of the Chime Summarizer, a CDK application depl
 
 ## Triggering the Bot (2 ways)
 
-1) Static React App Form
+1. Static React App Form
 
 Visit the CloudFront distribution domain name generated during the deployment and create an account. Paste the meeting invite and choose to schedule a time or to trigger the bot immediately. When possible, utilize a 'Copy' button when retreiving meeting invite info to paste into the form.
 
 ![Image](/images/FrontendForm.png)
 
+2. Upload Directly to the S3 bucket under prefix meeting-invite
 
-2) Upload Directly to the S3 bucket under prefix meeting-invite
-
-This option triggers the bot immediately. 
+This option triggers the bot immediately.
 
 ## Viewing Transcripts and Summaries
-For now, transcripts and summaries exist only in the S3 bucket created during deployment. To view transcripts, go to the bucket created by the deployment and look under the 'diarized-transcript' and 'call-summary' prefix. Future iterations will make these outputs viewable on the frontend. 
+
+For now, transcripts and summaries exist only in the S3 bucket created during deployment. To view transcripts, go to the bucket created by the deployment and look under the 'diarized-transcript' and 'call-summary' prefix. Future iterations will make these outputs viewable on the frontend.
 
 ### Bot Scheduling Lambda
 
@@ -225,7 +227,6 @@ const invokeModel = async (
 - Summaries uploaded to S3.
 - Dynamo DB record updated with the summary's S3 location.
 
-
 ## Limitations
 
 - For optimal results, speakers are encouraged to use microphones or headphone speakers.
@@ -238,8 +239,7 @@ const invokeModel = async (
 
 - yarn installed
 - AWS account
-- Anthropic and Titan Models enabled in the AWS Account: https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html 
-
+- Anthropic and Titan Models enabled in the AWS Account: https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html
 
 ### Deploy
 

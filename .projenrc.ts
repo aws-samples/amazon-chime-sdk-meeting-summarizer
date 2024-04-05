@@ -10,6 +10,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   appEntrypoint: 'amazon-chime-sdk-meeting-summarizer.ts',
   license: 'MIT-0',
   author: 'Court Schuett',
+  minorVersion: 1,
   copyrightOwner: 'Amazon.com, Inc.',
   authorAddress: 'https://aws.amazon.com',
   devDeps: ['esbuild'],
@@ -53,7 +54,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
 });
 
 project.addTask('launch', {
-  exec: 'yarn && yarn projen && yarn build && yarn cdk bootstrap && yarn cdk deploy  --require-approval never && yarn configLocal',
+  exec: 'yarn && yarn projen && yarn cdk bootstrap && yarn cdk deploy  --require-approval never && yarn configLocal',
 });
 project.addTask('getBucket', {
   exec: "aws cloudformation describe-stacks --stack-name AmazonChimeSDKMeetingSummarizer --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`siteBucket`].OutputValue' --output text",
