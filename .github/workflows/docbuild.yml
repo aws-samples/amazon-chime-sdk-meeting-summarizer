@@ -1,7 +1,8 @@
 name: "Release Docs"
 on:
-  pull_request: {}
-  workflow_dispatch: {}
+  push:
+    branches:
+      - main
 permissions:
   contents: write
 jobs:
@@ -21,6 +22,10 @@ jobs:
       - run: pip install mkdocs-minify-plugin
       - run: pip install mkdocs-material-extensions
       - run: pip install pillow cairosvg
+
+      # CDK API reference
       - run: npm install
       - run: npx typedoc --out docs/api src/index.ts
+      
+      # docs  deploy
       - run: mkdocs gh-deploy --force

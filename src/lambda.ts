@@ -34,6 +34,7 @@ export class LambdaResources extends Construct {
   public readonly callSummary: Function;
   public readonly dataSyncLambda: Function;
 
+
   constructor(scope: Construct, id: string, props: LambdaResourcesProps) {
     super(scope, id);
 
