@@ -369,7 +369,7 @@ const getAllScheduleDetails = async () => {
   }
 };
 
-     
+
 const createPrompt = (meetingInvitation: string): string => {
   return JSON.stringify({
     prompt: `Human: You are a an information extracting bot. Go over the meeting invitation below and determine what the meeting id and meeting type are <instructions></instructions> xml tags
