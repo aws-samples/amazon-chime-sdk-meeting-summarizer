@@ -56,8 +56,10 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
       const bedrockResponse = JSON.parse(
         new TextDecoder().decode(response.body),
       );
-      const summary = bedrockResponse.completion;
-
+      console.log(bedrockResponse)
+      const summary = bedrockResponse.content[0].text;
+      
+      console.log(summary)
       await writeBucket(latestObjectKey, summary, PREFIX || 'call-summary');
       await writeBucket(latestObjectKey, summary, KNOWLEDGE_BASE_PREFIX || 'knowledge-base');
       await updateDynamo(latestObjectKey);
@@ -96,34 +98,41 @@ const getObject = async (params: {
 };
 
 const createPrompt = (transcript: string): string => {
-  return JSON.stringify({
-    prompt: `Human: You are a transcript summarizing bot. You will go over the transcript below and provide a summary of the content within the <instructions> tags.
 
-    <transcript> ${transcript} </transcript>
+  const prompt = `Human: You are a transcript summarizing bot. You will go over the transcript below and provide a summary of the content within the <instructions> tags.
+
+  <transcript> ${transcript} </transcript>
+  
+    <instructions> 
+    - Generate the summary in the language that the transcript is in. 
+    - Go over the conversation that was had in the transcript. 
+    - Create a summary based on what occurred in the meeting. 
+    - Highlight specific action items that came up in the meeting, including follow-up tasks for each person. 
+    - If relevant, focus on what specific AWS services were mentioned during the conversation. 
+    - If there's sufficient context, infer the speaker's role and mention it in the summary. For instance, "Bob, the customer/designer/sales rep/..." 
+    </instructions>
+  
+  Assistant:
     
-      <instructions> 
-      - Detect the original language of the transcript and generate the summary in that language. 
-      - Go over the conversation that was had in the transcript. 
-      - Create a summary based on what occurred in the meeting. 
-      - Highlight specific action items that came up in the meeting, including follow-up tasks for each person. 
-      - If relevant, focus on what specific AWS services were mentioned during the conversation. 
-      - If there's sufficient context, infer the speaker's role and mention it in the summary. For instance, "Bob, the customer/designer/sales rep/..." 
-      </instructions>
-    
-    Assistant:
-      
-      Assistant: Should I add anything else in my answer?
-    
-      Human: If there is not enough context to generate a proper summary, then just return a string that says "Meeting not long enough to generate a transcript.    \nAssistant:`,
-    max_tokens_to_sample: 4000,
-    temperature: 0,
-  });
+    Assistant: Should I add anything else in my answer?
+  
+    Human: No matter the length of the transcript, summarize what happened. Do not include any xml tags <>   \nAssistant:`;
+  return JSON.stringify({
+    anthropic_version: "bedrock-2023-05-31",
+    max_tokens: 10000,
+    messages: [
+        {
+        role: "user",
+        content: [{ type: "text", text: prompt }],
+        },
+    ],
+    });
 };
 
 const createInvokeModelInput = (prompt: string): InvokeModelCommandInput => {
   return {
     body: prompt,
-    modelId: 'anthropic.claude-v2',
+    modelId: 'anthropic.claude-3-sonnet-20240229-v1:0',
     accept: 'application/json',
     contentType: 'application/json',
   };

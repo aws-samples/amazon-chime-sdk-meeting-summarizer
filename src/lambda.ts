@@ -32,6 +32,7 @@ export class LambdaResources extends Construct {
   public readonly createTranscript: Function;
   public readonly speakerDiarization: Function;
   public readonly callSummary: Function;
+  public readonly cleanTranscript: Function;
   public readonly dataSyncLambda: Function;
 
 
@@ -84,13 +85,26 @@ export class LambdaResources extends Construct {
       ],
     });
 
+    const cleanTranscriptRole = new Role(this, 'cleanTranscriptRole', {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AWSLambdaBasicExecutionRole',
+        ),
+      ],
+    });
+
+
     const bedrockPolicy = new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ['bedrock:InvokeModel'],
       resources: [
         `arn:aws:bedrock:${Stack.of(this).region
         }::foundation-model/anthropic.claude-v2`,
+        `arn:aws:bedrock:${Stack.of(this).region
+        }::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
       ],
+      
     });
 
     const dataSyncLambdaRole = new Role(this, 'dataSyncLambdaRole', {
@@ -116,6 +130,7 @@ export class LambdaResources extends Construct {
 
     speakerDiarizationRole.addToPolicy(bedrockPolicy);
     callSummaryRole.addToPolicy(bedrockPolicy);
+    cleanTranscriptRole.addToPolicy(bedrockPolicy)
 
 
     props.bucket.grantReadWrite(transcribeRole);
@@ -189,6 +204,21 @@ export class LambdaResources extends Construct {
       },
     });
 
+    this.cleanTranscript = new NodejsFunction(this, 'cleanTranscriptLambda', {
+      entry: './src/resources/cleanTranscript/index.ts',
+      runtime: Runtime.NODEJS_LATEST,
+      architecture: Architecture.ARM_64,
+      handler: 'lambdaHandler',
+      timeout: Duration.minutes(5),
+      role: callSummaryRole,
+      environment: {
+        CALL_SUMMARY_PREFIX: 'clean-transcript',
+        BUCKET: props.bucket.bucketName,
+        TABLE: props.callTable.tableName,
+        PREFIX: 'clean-transcript'
+      },
+    });
+
     this.dataSyncLambda = new NodejsFunction(this, 'dataSyncLambda', {
       entry: './src/resources/dataSync/index.ts',
       runtime: Runtime.NODEJS_LATEST,
@@ -232,8 +262,14 @@ export class LambdaResources extends Construct {
     );
     props.bucket.addEventNotification(
       EventType.OBJECT_CREATED,
-      new LambdaDestination(this.callSummary),
+      new LambdaDestination(this.cleanTranscript),
       { prefix: 'diarized-transcript' },
+      { suffix: '.txt' },
+    );
+    props.bucket.addEventNotification(
+      EventType.OBJECT_CREATED,
+      new LambdaDestination(this.callSummary),
+      { prefix: 'clean-transcript' },
       { suffix: '.txt' },
     );
   }

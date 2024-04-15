@@ -124,7 +124,8 @@ const createPrompt = (transcript: string): string => {
       - Only extract the names like the example above and do not add any other words to your response
       - Your response should only have a list of "speakers" and their associated name separated by a ":" surrounded by {}
       - if there is only one speaker identified then surround your answer with {}
-      - the format should look like this {"spk_0" : "Name", "spk_1: "Name2", etc.}, no unnecessary spacing should be added
+      - the format should look like this {"spk_0" : "Name", "spk_1: "Name2", etc.}, no unnecessary spacing should be added.
+      - If no speaker name is detected then return then assign the speaker key the same as the value. {"spk_0": "spk_0"}
       </instructions>
     
       Assistant: Should I add anything else in my answer?
