@@ -112,6 +112,7 @@ const createPayload = (transcript: string): string => {
         <instructions> 
         - The <transript> contains a speaker diarized transcript 
         - Go over the transcript and remove all filler words. For example  "um, uh, er, well, like, you know, okay, so, actually, basically, honestly, anyway, literally, right, I mean."
+        - Fix any errors in transcription that may be caused by homophones based on the context of the sentence.  For example, "one instead of won" or "high instead of hi"
         - In addition, please fix the transcript in cases where diarization is improperly performed. For example, in some cases you will see
         that sentences are split between two speakers. In this case infer who the actual speaker is and attribute it to them. 
         - Please review the following example of this, 
