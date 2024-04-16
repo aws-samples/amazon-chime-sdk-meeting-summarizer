@@ -62,7 +62,9 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
 
       const speakerNames = JSON.parse(responseReadable);
 
-      const processedSpeakers = speakerNames.completion;
+      const processedSpeakers = speakerNames.content[0].text;
+
+      console.log(processedSpeakers);
 
       const newTranscript = replaceSpeakerLabels(transcript, processedSpeakers);
 
@@ -115,33 +117,39 @@ const getObject = async (params: {
 };
 
 const createPrompt = (transcript: string): string => {
+  const prompt = `Human: You are a meeting transcript names extractor. Go over the transcript and extract the names from it. Use the following instructions in the <instructions></instructions> xml tags
+  <transcript> ${transcript} </transcript>
+  <instructions>
+  - Extract the names like this example - spk_0: "name1", spk_1: "name2".
+  - If no name is found for a speaker, use UNKNOWN_X where X is the speaker label number
+  - Only extract the names like the example above and do not add any other words to your response
+  - Your response should only have a list of "speakers" and their associated name separated by a ":" surrounded by {}
+  - if there is only one speaker identified then surround your answer with {}
+  - the format should look like this {"spk_0" : "Name", "spk_1: "Name2", etc.}, no unnecessary spacing should be added
+  </instructions>
+
+  Assistant: Should I add anything else in my answer?
+
+  Human: Only return a JSON formatted response with the Name and the speaker label associated to it. Do not add any other words to your answer. Do NOT EVER add any introductory sentences in your answer. Only give the names of the speakers actively speaking in the meeting. Only give the names of the speakers actively speaking in the meeting in the format shown above.
+  
+Assistant:`
   return JSON.stringify({
-    prompt: `Human: You are a meeting transcript names extractor. Go over the transcript and extract the names from it. Use the following instructions in the <instructions></instructions> xml tags
-      <transcript> ${transcript} </transcript>
-      <instructions>
-      - Some transcripts will be in different languages other than English. 
-      - Extract the names like this example - spk_0: "name1", spk_1: "name2".
-      - Only extract the names like the example above and do not add any other words to your response
-      - Your response should only have a list of "speakers" and their associated name separated by a ":" surrounded by {}
-      - if there is only one speaker identified then surround your answer with {}
-      - the format should look like this {"spk_0" : "Name", "spk_1: "Name2", etc.}, no unnecessary spacing should be added.
-      - If no speaker name is detected then return then assign the speaker key the same as the value. {"spk_0": "spk_0"}
-      </instructions>
-    
-      Assistant: Should I add anything else in my answer?
-    
-      Human: Only return a JSON formatted response with the Name and the speaker label associated to it. Do not add any other words to your answer. Do NOT EVER add any introductory sentences in your answer. Only give the names of the speakers actively speaking in the meeting. Only give the names of the speakers actively speaking in the meeting in the format shown above.
-      
-    Assistant:`,
-    max_tokens_to_sample: 4000,
-    temperature: 0,
-  });
+    anthropic_version: "bedrock-2023-05-31",
+    max_tokens: 10000,
+    messages: [
+        {
+        role: "user",
+        content: [{ type: "text", text: prompt }],
+        },
+    ],
+    temperature: 0.0,
+    });
 };
 
 const createInvokeModelInput = (prompt: string): InvokeModelCommandInput => {
   return {
     body: prompt,
-    modelId: 'anthropic.claude-v2',
+    modelId:'anthropic.claude-3-sonnet-20240229-v1:0',
     accept: 'application/json',
     contentType: 'application/json',
   };
