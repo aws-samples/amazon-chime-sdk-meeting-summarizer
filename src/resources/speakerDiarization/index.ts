@@ -132,14 +132,14 @@ const createPrompt = (transcript: string): string => {
 
   Human: Only return a JSON formatted response with the Name and the speaker label associated to it. Do not add any other words to your answer. Do NOT EVER add any introductory sentences in your answer. Only give the names of the speakers actively speaking in the meeting. Only give the names of the speakers actively speaking in the meeting in the format shown above.
   
-Assistant:`
+Assistant:`;
   return JSON.stringify({
-    anthropic_version: "bedrock-2023-05-31",
+    anthropic_version: 'bedrock-2023-05-31',
     max_tokens: 10000,
     messages: [
         {
-        role: "user",
-        content: [{ type: "text", text: prompt }],
+        role: 'user',
+        content: [{ type: 'text', text: prompt }],
         },
     ],
     temperature: 0.0,
@@ -149,7 +149,7 @@ Assistant:`
 const createInvokeModelInput = (prompt: string): InvokeModelCommandInput => {
   return {
     body: prompt,
-    modelId:'anthropic.claude-3-sonnet-20240229-v1:0',
+    modelId: 'anthropic.claude-3-sonnet-20240229-v1:0',
     accept: 'application/json',
     contentType: 'application/json',
   };

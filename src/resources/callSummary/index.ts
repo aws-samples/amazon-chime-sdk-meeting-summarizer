@@ -56,10 +56,10 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
       const bedrockResponse = JSON.parse(
         new TextDecoder().decode(response.body),
       );
-      console.log(bedrockResponse)
+      console.log(bedrockResponse);
       const summary = bedrockResponse.content[0].text;
-      
-      console.log(summary)
+
+      console.log(summary);
       await writeBucket(latestObjectKey, summary, PREFIX || 'call-summary');
       await writeBucket(latestObjectKey, summary, KNOWLEDGE_BASE_PREFIX || 'knowledge-base');
       await updateDynamo(latestObjectKey);
@@ -118,12 +118,12 @@ const createPrompt = (transcript: string): string => {
   
     Human: No matter the length of the transcript, summarize what happened. Do not include any xml tags <>   \nAssistant:`;
   return JSON.stringify({
-    anthropic_version: "bedrock-2023-05-31",
+    anthropic_version: 'bedrock-2023-05-31',
     max_tokens: 10000,
     messages: [
         {
-        role: "user",
-        content: [{ type: "text", text: prompt }],
+        role: 'user',
+        content: [{ type: 'text', text: prompt }],
         },
     ],
     });

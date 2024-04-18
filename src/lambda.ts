@@ -104,7 +104,7 @@ export class LambdaResources extends Construct {
         `arn:aws:bedrock:${Stack.of(this).region
         }::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
       ],
-      
+
     });
 
     const dataSyncLambdaRole = new Role(this, 'dataSyncLambdaRole', {
@@ -130,7 +130,7 @@ export class LambdaResources extends Construct {
 
     speakerDiarizationRole.addToPolicy(bedrockPolicy);
     callSummaryRole.addToPolicy(bedrockPolicy);
-    cleanTranscriptRole.addToPolicy(bedrockPolicy)
+    cleanTranscriptRole.addToPolicy(bedrockPolicy);
 
 
     props.bucket.grantReadWrite(transcribeRole);
@@ -215,7 +215,7 @@ export class LambdaResources extends Construct {
         CALL_SUMMARY_PREFIX: 'clean-transcript',
         BUCKET: props.bucket.bucketName,
         TABLE: props.callTable.tableName,
-        PREFIX: 'clean-transcript'
+        PREFIX: 'clean-transcript',
       },
     });
 

@@ -17,7 +17,7 @@ PutObjectCommandOutput,
 GetObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 import { S3Event } from 'aws-lambda';
-    
+
 const AWS_REGION = process.env.AWS_REGION;
 const TABLE = process.env.TABLE;
 const BUCKET = process.env.BUCKET;
@@ -29,7 +29,7 @@ const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const s3Client = new S3Client({ region: AWS_REGION });
 
-    
+
 interface httpResponse {
 statusCode: number;
 body: String;
@@ -39,7 +39,7 @@ interface meetingInfo {
 meetingID: string;
 scheduledTime: string;
 }
-    
+
 export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
 try {
     const latestObjectKey = extractLatestObjectKey(event);
@@ -53,19 +53,19 @@ try {
     if (transcript) {
 
     const prompt = createPayload(transcript);
-    console.log(prompt)
+    console.log(prompt);
     const input = createInvokeModelInput(prompt);
-    console.log(input)
+    console.log(input);
     const response = await invokeModel(input);
-    console.log(response)
+    console.log(response);
     const bedrockResponse = JSON.parse(
         new TextDecoder().decode(response.body),
     );
 
-    console.log(bedrockResponse)
+    console.log(bedrockResponse);
     const summary = bedrockResponse.content[0].text;
-    
-    console.log(summary)
+
+    console.log(summary);
     await writeBucket(latestObjectKey, summary, PREFIX || 'clean-transcript');
 
     await updateDynamo(latestObjectKey);
@@ -82,27 +82,26 @@ return {
     body: 'Lambda Succeeded, Call Summary Generated',
 };
 };
-    
-    
-    
+
+
     const extractLatestObjectKey = (event: S3Event): string => {
         return event.Records[0].s3.object.key;
       };
-      
+
     const createGetObjectParams = (
     bucketName: string,
     key: string,
     ): { Bucket: string; Key: string } => {
     return { Bucket: bucketName, Key: key };
     };
-    
+
     const getObject = async (params: {
     Bucket: string;
     Key: string;
     }): Promise<GetObjectCommandOutput> => {
     return s3Client.send(new GetObjectCommand(params));
     };
-    
+
 
 const createPayload = (transcript: string): string => {
     const prompt = `Human: You are a transcript editor, please follow the <instructions> tags.
@@ -130,16 +129,16 @@ const createPayload = (transcript: string): string => {
     
     Assistant:`;
     return JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
+        anthropic_version: 'bedrock-2023-05-31',
         max_tokens: 10000,
         messages: [
             {
-            role: "user",
-            content: [{ type: "text", text: prompt }],
+            role: 'user',
+            content: [{ type: 'text', text: prompt }],
             },
         ],
         });
-    }
+    };
 
 const createInvokeModelInput = (prompt: string): InvokeModelCommandInput => {
 return {
@@ -157,12 +156,12 @@ const output = bedrockClient.send(new InvokeModelCommand(input));
 return output;
 };
 
-    
+
 const extractAfterFirstSlash = (input: string): string | undefined => {
     const parts = input.split('/');
     return parts.length > 1 ? parts[1] : undefined;
     };
-    
+
     const writeBucket = async (
     latestObjectKey: string,
     summary: string,
@@ -189,7 +188,7 @@ const extractAfterFirstSlash = (input: string): string | undefined => {
         }),
     };
     };
-    
+
     const updateDynamo = async (
     latestObjectKey: string,
     ): Promise<UpdateItemCommandOutput | httpResponse> => {
@@ -219,7 +218,7 @@ const extractAfterFirstSlash = (input: string): string | undefined => {
         };
     }
     };
-    
+
     const extractCallId = (inputString: string): meetingInfo => {
     const partsAfterFirstSlash = inputString.split('/')[1];
     const meetingID = partsAfterFirstSlash.split('.')[0];
