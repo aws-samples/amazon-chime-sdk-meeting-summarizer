@@ -18,6 +18,9 @@
       <a href="https://github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/pulls">
         <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/aws-samples/amazon-chime-sdk-meeting-summarizer?color=0088ff" />
       </a>
+       <a href="https://securityscorecards.dev/viewer/?uri=github.com/aws-samples/amazon-chime-sdk-meeting-summarizer">
+      <img alt="OpenSSF Scorecard" src="https://api.securityscorecards.dev/projects/github.com/aws-samples/amazon-chime-sdk-meeting-summarizer/badge" />
+    </a>
     </p>
   </p>
 </p>
