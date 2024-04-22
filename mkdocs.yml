@@ -88,5 +88,10 @@ nav:
   - Usage:
       - Examples:
           - Scheduling: usage/scheduling-meetings.md
-          - Management: usage/meeting-management.md
+  - Prompt Engineering Examples:
+          - Call Scheduling: usage/scheduling.md
+          - Speaker Diarization: usage/diarization.md
+          - Summarization: usage/summarization.md
+          - Transcription: usage/transcription.md
+  - Limitations: limitations.md
   - API Reference: "api"
