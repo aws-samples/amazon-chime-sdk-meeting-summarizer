@@ -234,6 +234,18 @@
     },
     {
       "files": [
+        "src/resources/**/*.ts",
+        "src/*.ts",
+        "site/src/**/*.tsx",
+        "test/*.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/no-require-imports": "off",
+        "import/no-extraneous-dependencies": "off"
+      }
+    },
+    {
+      "files": [
         ".projenrc.ts"
       ],
       "rules": {
