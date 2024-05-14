@@ -13,9 +13,8 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   minorVersion: 1,
   copyrightOwner: 'Amazon.com, Inc.',
   authorAddress: 'https://aws.amazon.com',
-  devDeps: ['esbuild'],
+  devDeps: ['esbuild', 'cdk-nag'],
   projenrcTs: true,
-  jest: false,
   deps: [
     'fs-extra',
     '@types/fs-extra',
@@ -110,6 +109,7 @@ upgradeSite.addJobs({
 });
 
 project.tsconfigDev.file.addOverride('include', [
+  'test/*.ts',
   'src/**/*.ts',
   'site/src/**/*.tsx',
   './.projenrc.ts',
@@ -123,6 +123,19 @@ project.eslint.addOverride({
   },
 });
 
+project.eslint.addOverride({
+  files: [
+    'src/resources/**/*.ts',
+    'src/*.ts',
+    'site/src/**/*.tsx',
+    'test/*.ts',
+  ],
+  rules: {
+    '@typescript-eslint/no-require-imports': 'off',
+    'import/no-extraneous-dependencies': 'off',
+  },
+});
+
 const common_exclude = [
   'docker-compose.yaml',
   'cdk.out',
@@ -133,6 +146,7 @@ const common_exclude = [
   '.env',
   '**/dist/**',
   'config.json',
+  'cdk-nag-output.txt',
 ];
 
 project.gitignore.exclude(...common_exclude);

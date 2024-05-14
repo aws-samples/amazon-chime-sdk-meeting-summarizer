@@ -28,7 +28,6 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
     props: AmazonChimeSDKMeetingSummarizerProps,
   ) {
     super(scope, id, props);
-
     const databaseResources = new DatabaseResources(this, 'databaseResources');
     const s3Resources = new S3Resources(this, 's3Resources');
     const chimeResources = new ChimeSDKResources(this, 'chimeSDKResources', {
@@ -83,7 +82,6 @@ export class AmazonChimeSDKMeetingSummarizer extends Stack {
       userPoolRegion: cognitoResources.userPoolRegion,
       identityPool: cognitoResources.identityPool,
     });
-
 
     new CloudWatchResources(this, 'cloudwatchResources', {
       smaHandler: chimeResources.smaHandler,
