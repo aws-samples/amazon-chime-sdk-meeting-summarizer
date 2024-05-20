@@ -9,7 +9,7 @@ import {
     TimeInput,
     Toggle,
     Icon,
-    Flashbar
+    Flashbar,
 } from '@cloudscape-design/components';
 import moment from 'moment';
 import { post } from 'aws-amplify/api';
@@ -37,13 +37,12 @@ function MeetingHandler() {
         setLocalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, []);
 
-
     const handleDateChange = (event: { detail: { value: string } }) => {
         const newDate = event.detail.value;
         if (moment(newDate).isAfter(moment().subtract(1, 'day'))) {
             setSelectedDate(newDate);
         } else {
-            console.error("Selected date is invalid");
+            console.error('Selected date is invalid');
         }
     };
 
@@ -55,7 +54,7 @@ function MeetingHandler() {
         setShowWarning(false);
 
         if (!authToken) {
-            setErrorMessage("Authorization token is missing.");
+            setErrorMessage('Authorization token is missing.');
             setShowError(true);
             return;
         }
@@ -66,7 +65,7 @@ function MeetingHandler() {
             let formattedDate;
             if (isImmediate) {
                 formattedDate = moment().format('YYYY-MM-DDTHH:mm:ss');
-                console.log(formattedDate)
+                console.log(formattedDate);
             } else {
                 if (!selectedDate || !selectedTime) {
                     setShowWarning(true);
@@ -76,7 +75,7 @@ function MeetingHandler() {
                 const date = moment(selectedDate).format('YYYY-MM-DD');
                 const time = moment(selectedTime, 'HH:mm').format('HH:mm:ss');
                 formattedDate = `${date}T${time}`;
-                console.log(formattedDate)
+                console.log(formattedDate);
             }
 
             const requestData = { meetingInfo, formattedDate, localTimeZone };
@@ -112,42 +111,58 @@ function MeetingHandler() {
     return (
         <>
             {showWarning && (
-                <Flashbar items={[{
-                    type: "warning",
-                    content: "Please enter meeting information before submitting.",
-                    dismissible: true,
-                    dismissLabel: "Dismiss message",
-                    onDismiss: () => setShowWarning(false),
-                    id: "meetingInfoWarning"
-                }]} />
+                <Flashbar
+                    items={[
+                        {
+                            type: 'warning',
+                            content: 'Please enter meeting information before submitting.',
+                            dismissible: true,
+                            dismissLabel: 'Dismiss message',
+                            onDismiss: () => setShowWarning(false),
+                            id: 'meetingInfoWarning',
+                        },
+                    ]}
+                />
             )}
             {showInProgress && (
-                <Flashbar items={[{
-                    type: "success",
-                    loading: true,
-                    content: "Your request is being processed...",
-                    dismissible: true,
-                    id: "inProgressMessage"
-                }]} />
+                <Flashbar
+                    items={[
+                        {
+                            type: 'success',
+                            loading: true,
+                            content: 'Your request is being processed...',
+                            dismissible: true,
+                            id: 'inProgressMessage',
+                        },
+                    ]}
+                />
             )}
             {showSuccess && (
-                <Flashbar items={[{
-                    type: "success",
-                    content: "The meeting summarizer bot will connect to your call shortly.",
-                    dismissible: true,
-                    onDismiss: () => setShowSuccess(false),
-                    id: "successMessage"
-                }]} />
+                <Flashbar
+                    items={[
+                        {
+                            type: 'success',
+                            content: 'The meeting summarizer bot will connect to your call shortly.',
+                            dismissible: true,
+                            onDismiss: () => setShowSuccess(false),
+                            id: 'successMessage',
+                        },
+                    ]}
+                />
             )}
             {showError && (
-                <Flashbar items={[{
-                    header: "Error",
-                    type: "error",
-                    content: errorMessage,
-                    dismissible: true,
-                    onDismiss: () => setShowError(false),
-                    id: "errorMessage"
-                }]} />
+                <Flashbar
+                    items={[
+                        {
+                            header: 'Error',
+                            type: 'error',
+                            content: errorMessage,
+                            dismissible: true,
+                            onDismiss: () => setShowError(false),
+                            id: 'errorMessage',
+                        },
+                    ]}
+                />
             )}
             <br />
             <Container>
@@ -163,8 +178,7 @@ function MeetingHandler() {
                                 />
                             </FormField>
                             {!scheduleForLater && (
-                                <Button
-                                    onClick={() => handleMeeting(true)}>
+                                <Button onClick={() => handleMeeting(true)}>
                                     <span style={{ marginRight: '8px' }}>
                                         <Icon name="call" />
                                     </span>
@@ -185,10 +199,7 @@ function MeetingHandler() {
                             {scheduleForLater && (
                                 <>
                                     <FormField label="Start date">
-                                        <Calendar
-                                            onChange={handleDateChange}
-                                            value={selectedDate}
-                                        />
+                                        <Calendar onChange={handleDateChange} value={selectedDate} />
                                     </FormField>
                                     <FormField label="Start time">
                                         <TimeInput
@@ -197,8 +208,7 @@ function MeetingHandler() {
                                             placeholder="15:30:00"
                                         />
                                     </FormField>
-                                    <Button
-                                        onClick={() => handleMeeting(false)}>
+                                    <Button onClick={() => handleMeeting(false)}>
                                         <span style={{ marginRight: '8px' }}>
                                             <Icon name="calendar" />
                                         </span>
