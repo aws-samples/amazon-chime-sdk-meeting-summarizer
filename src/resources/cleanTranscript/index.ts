@@ -23,7 +23,6 @@ const TABLE = process.env.TABLE;
 const BUCKET = process.env.BUCKET;
 const PREFIX = process.env.PREFIX;
 
-//import clients
 const bedrockClient = new BedrockRuntimeClient({ region: AWS_REGION });
 const dynamoClient = new DynamoDBClient({ region: AWS_REGION });
 const s3Client = new S3Client({ region: AWS_REGION });
@@ -72,7 +71,7 @@ export const lambdaHandler = async (event: S3Event): Promise<httpResponse> => {
       );
 
       if (processedChunks.length > 0) {
-        const enhancedTranscript = processedChunks.join(' ');
+        const enhancedTranscript = processedChunks.join('\n');
         const cleanTranscriptPrefix = PREFIX || 'clean-transcript';
         await writeBucket(
           latestObjectKey,
@@ -106,7 +105,9 @@ function splitTranscript(transcript: string, maxTokens: number): string[] {
     if (currentChunk.length + line.length + 1 <= maxTokens) {
       currentChunk += line + '\n';
     } else {
-      chunks.push(currentChunk.trim());
+      if (currentChunk.trim()) {
+        chunks.push(currentChunk.trim());
+      }
       currentChunk = line + '\n';
     }
   }
@@ -117,6 +118,7 @@ function splitTranscript(transcript: string, maxTokens: number): string[] {
 
   return chunks;
 }
+
 const extractLatestObjectKey = (event: S3Event): string => {
   return event.Records[0].s3.object.key;
 };
@@ -147,8 +149,13 @@ const createPayload = (transcript: string): string => {
   - Remove all filler words, such as "um," "uh," "er," "well," "like," "you know," "okay," "so," "actually," "basically," "honestly," "anyway," "literally," "right," and "I mean."
   - Correct any errors in transcription caused by homophones based on the context of the sentence. For example, replace "one" with "won" or "high" with "hi" when appropriate.
   - Fix issues with improper diarization, where sentences are split between two speakers. Infer the actual speaker based on context and attribute the entire sentence to them.
-  - Return the entire cleaned transcript with filler words removed and diarization improved. Do not include any additional text or XML tags.  Only include the cleaned transcription.
-  - Each different speaker should be on a new line
+  - Return the entire cleaned transcript with filler words removed and diarization improved. Do not include any additional text or XML tags. Only include the cleaned transcription.
+  - Each different speaker should be on a new line. with a space between the lines to make it more readable
+  - Also be aware, sometimes at the beginning of the conversation you may notice from the transcript that diarization is poorly done. This is because people are talking over each other. Infer what is going on and do your best to attribute and fix the transcript to be more coherent
+  - Also double check the speaker labels to make sure they are correct. For example if you see the following situation Court: My name is Adam  then correct it to say Adam: My name is Adam.
+
+  
+
 
   Example:
   Input:
@@ -188,8 +195,7 @@ const createInvokeModelInput = (prompt: string): InvokeModelCommandInput => {
 const invokeModel = async (
   input: InvokeModelCommandInput,
 ): Promise<InvokeModelCommandOutput> => {
-  const output = await bedrockClient.send(new InvokeModelCommand(input));
-  return output;
+  return bedrockClient.send(new InvokeModelCommand(input));
 };
 
 const extractAfterFirstSlash = (input: string): string | undefined => {
@@ -231,7 +237,6 @@ const updateDynamo = async (
   const newKey = `${PREFIX}/${extractAfterFirstSlash(latestObjectKey)}`;
   const value = `https://${BUCKET}.s3.amazonaws.com/${newKey}`;
   try {
-    // Send the command to DynamoDB
     const response = await dynamoClient.send(
       new UpdateItemCommand({
         TableName: TABLE,
@@ -256,7 +261,6 @@ const updateDynamo = async (
 
 const extractCallId = (inputString: string): meetingInfo => {
   const partsAfterFirstSlash = inputString.split('/')[1];
-  const meetingID = partsAfterFirstSlash.split('.')[0];
-  const scheduledTime = partsAfterFirstSlash.split('.')[1];
+  const [meetingID, scheduledTime] = partsAfterFirstSlash.split('.');
   return { meetingID, scheduledTime };
 };
