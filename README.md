@@ -25,6 +25,8 @@
   </p>
 </p>
 
+##  ‼️ ‼️ DISCLAIMER: This solution is not approved for AWS employees to use internally. Please reference internal AWS Generative AI Policy for questions. ‼️ ‼️ 
+
 ## High level Architecture
 
 ![Image](/docs/static/diagram.png)
