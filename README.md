@@ -25,7 +25,7 @@
   </p>
 </p>
 
-# DISCLAIMER:  ‼️ ‼️ ‼️ ‼️ This is not approved for usage with AWS employees internally.  ‼️ ‼️ ‼️ ‼️ ‼
+#  ‼️ ‼️ ‼️ ‼️ DISCLAIMER: This solution is not approved for AWS employees to use internally.  ‼️ ‼️ ‼️ ‼️ 
 
 ## High level Architecture
 
