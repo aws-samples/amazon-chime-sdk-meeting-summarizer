@@ -60,7 +60,7 @@
     "@opensearch-project/opensearch": "^2.11.0",
     "@types/aws-lambda": "^8.10.143",
     "@types/fs-extra": "^11.0.4",
-    "aws-cdk-lib": "^2.101.0",
+    "aws-cdk-lib": "^2.177.0",
     "aws-lambda": "^1.0.7",
     "cdk-amazon-chime-resources": "^3.2.24",
     "constructs": "^10.0.5",
