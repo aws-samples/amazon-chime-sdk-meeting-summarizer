@@ -101,15 +101,16 @@ const createPrompt = (transcript: string): string => {
 
   const prompt = `Human: You are a transcript summarizing bot. You will go over the transcript below and provide a summary of the content within the <instructions> tags.
 
-  <transcript> ${transcript} </transcript>
-  
+
+/*  <transcript> ${transcript} </transcript>*/
     <instructions> 
     - Generate the summary in the language that the transcript is in. 
     - Go over the conversation that was had in the transcript. 
     - Create a summary based on what occurred in the meeting. 
     - Highlight specific action items that came up in the meeting, including follow-up tasks for each person. 
     - If relevant, focus on what specific AWS services were mentioned during the conversation. 
-    - If there's sufficient context, infer the speaker's role and mention it in the summary. For instance, "Bob, the customer/designer/sales rep/..." 
+    - If there's sufficient context, infer the speaker's role and mention it in the summary. For instance, "Bob, the customer/designer/sales rep/..."
+    - Generate an entirely separate markdown table of the different action items mentioned, thier owners, and the due dates of the action items
     </instructions>
   
   Assistant:
@@ -117,6 +118,10 @@ const createPrompt = (transcript: string): string => {
     Assistant: Should I add anything else in my answer?
   
     Human: No matter the length of the transcript, summarize what happened. Do not include any xml tags <>   \nAssistant:`;
+    
+ 
+
+/*  <transcript> ${transcript} </transcript>*/
   return JSON.stringify({
     anthropic_version: 'bedrock-2023-05-31',
     max_tokens: 10000,
